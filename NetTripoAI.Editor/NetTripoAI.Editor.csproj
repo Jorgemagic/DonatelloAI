@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Evergine.Common" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Components" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Framework" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Editor.Extension" Version="2023.9.28.1837" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\NetTripoAI\NetTripoAI.csproj" />
+	</ItemGroup>
+</Project>

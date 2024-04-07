@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<GenerateEvergineContent>True</GenerateEvergineContent>
+		<GenerateEvergineAssets>False</GenerateEvergineAssets>
+		<GenerateEvergineScenesCode>True</GenerateEvergineScenesCode>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Evergine.Common" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Components" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Framework" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Mathematics" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Platform" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Bullet" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.Targets" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.CodeScenes" Version="2023.9.28.1837" />
+		<PackageReference Include="Evergine.ImGui" Version="2023.9.28.1837" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+	</ItemGroup>
+</Project>
