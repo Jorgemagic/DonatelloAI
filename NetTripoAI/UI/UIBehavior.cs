@@ -26,8 +26,8 @@ namespace NetTripoAI.UI
         {            
             var io = ImguiNative.igGetIO();
 
-            bool open = true;
-            ImguiNative.igShowDemoWindow(open.Pointer());
+            ////bool open = true;
+            ////ImguiNative.igShowDemoWindow(open.Pointer());
             this.createPanel.Show(ref io);
         }
     }

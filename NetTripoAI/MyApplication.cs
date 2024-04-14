@@ -3,6 +3,7 @@ using Evergine.Framework.Services;
 using Evergine.Framework.Threading;
 using Evergine.Platform;
 using NetTripoAI.ImGui;
+using NetTripoAI.TripoAI;
 using NetTripoAI.UI;
 
 namespace NetTripoAI
@@ -22,6 +23,7 @@ namespace NetTripoAI
             this.Container.Register<AssetsService>();
             this.Container.Register<ForegroundTaskSchedulerService>();
             this.Container.Register<WorkActionScheduler>();
+            this.Container.Register<TripoAIService>();
         }
 
         public override void Initialize()

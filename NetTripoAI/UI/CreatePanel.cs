@@ -1,14 +1,11 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
 using Evergine.Framework;
-using Evergine.Framework.Threading;
 using Evergine.Mathematics;
 using Evergine.UI;
-using NetTripoAI.Helpers;
 using NetTripoAI.ImGui;
-using SixLabors.ImageSharp.PixelFormats;
+using NetTripoAI.TripoAI;
 using System;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +13,8 @@ namespace NetTripoAI.UI
 {
     public class CreatePanel
     {
+        private TripoAIService tripoAIService;
+
         private GraphicsContext graphicsContext;
 
         private bool open_window = true;
@@ -23,11 +22,15 @@ namespace NetTripoAI.UI
 
         private IntPtr image;
         private CustomImGuiManager imGuiManager;
+        private int progress = 0;
+        private string status = string.Empty;
+        private TripoResponse tripoResponse;
 
         public CreatePanel(CustomImGuiManager manager)
-        {            
-            this.imGuiManager = manager;   
+        {
+            this.imGuiManager = manager;
             this.graphicsContext = Application.Current.Container.Resolve<GraphicsContext>();
+            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -38,6 +41,7 @@ namespace NetTripoAI.UI
                 ImguiNative.igSetNextWindowSize(new Vector2(400, 400), ImGuiCond.None);
                 ImguiNative.igBegin("CreatePanel", this.open_window.Pointer(), ImGuiWindowFlags.None);
 
+                var buttonSize = new Vector2(50, 19);
                 fixed (byte* buff = textBuffer)
                 {
                     ImguiNative.igInputTextWithHint(
@@ -49,8 +53,8 @@ namespace NetTripoAI.UI
                         null,
                         null);
 
-                    ImguiNative.igSameLine(0, 0);
-                    if (ImguiNative.igButton("Create", new Vector2(50, 20)))
+                    ImguiNative.igSameLine(0, 4);
+                    if (ImguiNative.igButton("Create", buttonSize))
                     {
                         string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
                         var index = prompt.IndexOf('\0');
@@ -60,68 +64,62 @@ namespace NetTripoAI.UI
                         }
 
                         // Create pressed
-                        this.DownloadImage();
+                        this.RequestDraftModel(prompt);
                     }
 
-                    ImguiNative.igImage(this.image, Vector2.One * 100, Vector2.Zero, Vector2.One, Vector4.One, Vector4.Zero);
+                    ImguiNative.igImage(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, Vector4.One, Vector4.Zero);
+                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315 - buttonSize.X, buttonSize.Y), this.status);
+                    ImguiNative.igSameLine(0, 4);
+                    if (ImguiNative.igButton("Go", buttonSize))
+                    {
+                        this.DownloadModel(this.tripoResponse.data.result.model.url);
+                    }
                 }
 
                 ImguiNative.igEnd();
             }
         }
 
-        private void DownloadImage()
+        private void RequestDraftModel(string prompt)
         {
             Task.Run(async () =>
             {
-                var textureImage = await this.DownloadTextureFromUrl(@"https://cdn.pixabay.com/photo/2015/10/01/17/17/car-967387_640.png");
-                this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
-            });
-        }
+                // Request draft model
+                this.progress = 0;
+                var taskId = await this.tripoAIService.RequestADraftModel(prompt);
 
-        public async Task<Texture> DownloadTextureFromUrl(string url)
-        {
-            Texture result = null;
-            using (HttpClient cliente = new HttpClient())
-            {
-                using (var response = await cliente.GetAsync(url))
+                // Waiting to task completed                
+                string taskStatus = string.Empty;
+                while (taskStatus == string.Empty ||
+                       taskStatus == "queued" ||
+                       taskStatus == "running")
                 {
-                    response.EnsureSuccessStatusCode();
+                    await Task.Delay(100);
+                    this.tripoResponse = await this.tripoAIService.GetTaskStatus(taskId);
+                    this.progress = this.tripoResponse.data.progress;
+                    this.status = $"task status:{this.progress}";
 
-                    using (var fileStream = await response.Content.ReadAsStreamAsync())
-                    {
-                        using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(fileStream))
-                        {
-                            RawImageLoader.CopyImageToArrayPool(image, out _, out byte[] data);
-                            await EvergineForegroundTask.Run(() =>
-                            {
-                                TextureDescription desc = new TextureDescription()
-                                {
-                                    Type = TextureType.Texture2D,
-                                    Width = (uint)image.Width,
-                                    Height = (uint)image.Height,
-                                    Depth = 1,
-                                    ArraySize = 1,
-                                    Faces = 1,
-                                    Usage = ResourceUsage.Default,
-                                    CpuAccess = ResourceCpuAccess.None,
-                                    Flags = TextureFlags.ShaderResource,
-                                    Format = PixelFormat.R8G8B8A8_UNorm,
-                                    MipLevels = 1,
-                                    SampleCount = TextureSampleCount.None,
-                                };
-                                result = this.graphicsContext.Factory.CreateTexture(ref desc);
 
-                                this.graphicsContext.UpdateTextureData(result, data);
-                            });
-                        }
-
-                        fileStream.Flush();
-                    }
-
-                    return result;
+                    taskStatus = this.tripoResponse.data.status;
                 }
-            }
+
+                // View draft model result                
+                var imageUrl = this.tripoResponse.data.result.rendered_image.url;
+
+                this.progress = 0;
+                this.status = $"Download image:{this.progress}";
+
+                var textureImage = await this.tripoAIService.DownloadTextureFromUrl(imageUrl);
+                this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
+
+                this.progress = 100;
+                this.status = $"Download image:{this.progress}";                
+            });
+        }     
+
+        private void DownloadModel(string modelUrl)
+        {
+
         }
     }
 }
