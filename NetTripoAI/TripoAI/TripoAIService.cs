@@ -2,7 +2,8 @@
 using Evergine.Framework;
 using Evergine.Framework.Services;
 using Evergine.Framework.Threading;
-using NetTripoAI.Helpers;
+using NetTripoAI.Importers.GLB;
+using NetTripoAI.Importers.Images;
 using Newtonsoft.Json;
 using SixLabors.ImageSharp.PixelFormats;
 using System;

@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using System.Buffers;
 using System.Runtime.InteropServices;
 
-namespace NetTripoAI.Helpers
+namespace NetTripoAI.Importers.Images
 {
     /// <summary>
     /// Helper class to read JPG as an array of bytes.

@@ -1,6 +1,9 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
 using Evergine.Framework;
+using Evergine.Framework.Graphics;
+using Evergine.Framework.Physics3D;
+using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using Evergine.UI;
 using NetTripoAI.ImGui;
@@ -16,6 +19,8 @@ namespace NetTripoAI.UI
         private TripoAIService tripoAIService;
 
         private GraphicsContext graphicsContext;
+        private ScreenContextManager screenContextManager;
+        private AssetsService assetsService;
 
         private bool open_window = true;
         private byte[] textBuffer = new byte[256];
@@ -30,7 +35,9 @@ namespace NetTripoAI.UI
         {
             this.imGuiManager = manager;
             this.graphicsContext = Application.Current.Container.Resolve<GraphicsContext>();
+            this.screenContextManager = Application.Current.Container.Resolve<ScreenContextManager>();
             this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
+            this.assetsService = Application.Current.Container.Resolve<AssetsService>();
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -119,7 +126,30 @@ namespace NetTripoAI.UI
 
         private void DownloadModel(string modelUrl)
         {
+            Task.Run(async () =>
+            {
+                var model = await this.tripoAIService.DownloadModelFromURL(modelUrl);
 
+                var currentScene = screenContextManager.CurrentContext[0];
+
+                var entity = model.InstantiateModelHierarchy(this.assetsService);
+
+                var root = new Entity()
+                                .AddComponent(new Transform3D());
+                root.AddChild(entity);
+
+                var boundingBox = model.BoundingBox.Value;
+                boundingBox.Transform(entity.FindComponent<Transform3D>().WorldTransform);
+                root.FindComponent<Transform3D>().Scale = Vector3.One * (1.0f / boundingBox.HalfExtent.Length());
+                root.AddComponent(new BoxCollider3D()
+                {
+                    Size = boundingBox.HalfExtent * 2,
+                    Offset = boundingBox.Center,
+                });
+                root.AddComponent(new StaticBody3D());
+
+                currentScene.Managers.EntityManager.Add(root);
+            });
         }
     }
 }
