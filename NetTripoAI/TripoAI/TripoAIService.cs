@@ -154,5 +154,24 @@ namespace NetTripoAI.TripoAI
                 }
             }
         }
+
+        public async Task<Evergine.Framework.Graphics.Model> DownloadModelFromURL(string url)
+        {
+            Evergine.Framework.Graphics.Model result = null;
+            using (HttpClient cliente = new HttpClient())
+            {
+                using (var response = await cliente.GetAsync(url))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    using (var fileStream = await response.Content.ReadAsStreamAsync())
+                    {
+                        result = await GLBRuntime.Instance.Read(fileStream);                        
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }

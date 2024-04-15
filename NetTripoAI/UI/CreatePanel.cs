@@ -22,9 +22,10 @@ namespace NetTripoAI.UI
         private ScreenContextManager screenContextManager;
         private AssetsService assetsService;
 
-        private bool open_window = true;
+        public bool OpenWindow = true;
         private byte[] textBuffer = new byte[256];
 
+        private bool firstTime = true;
         private IntPtr image;
         private CustomImGuiManager imGuiManager;
         private int progress = 0;
@@ -42,15 +43,22 @@ namespace NetTripoAI.UI
 
         public unsafe void Show(ref ImGuiIO* io)
         {
-            if (open_window)
+            if (this.OpenWindow)
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(new Vector2(400, 400), ImGuiCond.None);
-                ImguiNative.igBegin("CreatePanel", this.open_window.Pointer(), ImGuiWindowFlags.None);
+                ImguiNative.igSetNextWindowSize(new Vector2(332, 420), ImGuiCond.None);
+                ImguiNative.igBegin("CreatePanel", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
                 fixed (byte* buff = textBuffer)
                 {
+                    ImguiNative.igSetNextItemWidth(315 - buttonSize.X - 4);
+                    if (this.firstTime)
+                    {
+                        ImguiNative.igSetKeyboardFocusHere(0);
+                        this.firstTime = false;
+                    }
+
                     ImguiNative.igInputTextWithHint(
                         "##prompt",
                         "Prompt text here",
@@ -74,13 +82,16 @@ namespace NetTripoAI.UI
                         this.RequestDraftModel(prompt);
                     }
 
-                    ImguiNative.igImage(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, Vector4.One, Vector4.Zero);
-                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315 - buttonSize.X, buttonSize.Y), this.status);
-                    ImguiNative.igSameLine(0, 4);
-                    if (ImguiNative.igButton("Go", buttonSize))
+                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.status);
+                    ////if (this.image != IntPtr.Zero)
+
+                    ImguiNative.igImage(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, Vector4.Zero, Vector4.Zero);
+                    if (ImguiNative.igButton("Import model in Evergine", new Vector2(315, buttonSize.Y)))
                     {
                         this.DownloadModel(this.tripoResponse.data.result.model.url);
+                        this.OpenWindow = false;
                     }
+
                 }
 
                 ImguiNative.igEnd();
@@ -113,16 +124,14 @@ namespace NetTripoAI.UI
                 // View draft model result                
                 var imageUrl = this.tripoResponse.data.result.rendered_image.url;
 
-                this.progress = 0;
-                this.status = $"Download image:{this.progress}";
+                this.status = $"Download image preview ...";
 
                 var textureImage = await this.tripoAIService.DownloadTextureFromUrl(imageUrl);
                 this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
-                this.progress = 100;
-                this.status = $"Download image:{this.progress}";                
+                this.status = $"Done!";
             });
-        }     
+        }
 
         private void DownloadModel(string modelUrl)
         {

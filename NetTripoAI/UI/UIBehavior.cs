@@ -1,5 +1,7 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Common.Graphics;
+using Evergine.Common.Input;
+using Evergine.Common.Input.Keyboard;
 using Evergine.Framework;
 using Evergine.Framework.Services;
 using Evergine.UI;
@@ -12,6 +14,9 @@ namespace NetTripoAI.UI
     {
         [BindSceneManager]
         private CustomImGuiManager imguiManager;
+
+        [BindService]
+        protected GraphicsPresenter graphicsPresenter;
 
         private CreatePanel createPanel;
 
@@ -29,6 +34,12 @@ namespace NetTripoAI.UI
             ////bool open = true;
             ////ImguiNative.igShowDemoWindow(open.Pointer());
             this.createPanel.Show(ref io);
+
+            KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
+            if (keyboardDispatcher?.ReadKeyState(Keys.Space) == ButtonState.Pressing)
+            {
+                this.createPanel.OpenWindow = true;
+            }
         }
     }
 }
