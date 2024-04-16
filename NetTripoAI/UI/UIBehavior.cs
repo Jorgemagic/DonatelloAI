@@ -19,12 +19,14 @@ namespace NetTripoAI.UI
         protected GraphicsPresenter graphicsPresenter;
 
         private CreatePanel createPanel;
+        private LoadingPanel loadingPanel;
 
         protected override void OnActivated()
         {
             base.OnActivated();
 
-            this.createPanel = new CreatePanel(imguiManager);
+            this.loadingPanel = new LoadingPanel();
+            this.createPanel = new CreatePanel(imguiManager, this.loadingPanel);
         }
 
         protected override void Update(TimeSpan gameTime)
@@ -34,6 +36,7 @@ namespace NetTripoAI.UI
             ////bool open = true;
             ////ImguiNative.igShowDemoWindow(open.Pointer());
             this.createPanel.Show(ref io);
+            this.loadingPanel.Show(ref io);
 
             KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
             if (keyboardDispatcher?.ReadKeyState(Keys.Space) == ButtonState.Pressing)

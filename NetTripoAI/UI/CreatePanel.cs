@@ -21,7 +21,7 @@ namespace NetTripoAI.UI
         private GraphicsContext graphicsContext;
         private ScreenContextManager screenContextManager;
         private AssetsService assetsService;
-
+        private LoadingPanel loadingPanel;
         public bool OpenWindow = true;
         private byte[] textBuffer = new byte[256];
 
@@ -30,11 +30,13 @@ namespace NetTripoAI.UI
         private CustomImGuiManager imGuiManager;
         private int progress = 0;
         private string status = string.Empty;
+        private bool isBusy;
         private TripoResponse tripoResponse;
 
-        public CreatePanel(CustomImGuiManager manager)
+        public CreatePanel(CustomImGuiManager manager, LoadingPanel loadingPanel)
         {
             this.imGuiManager = manager;
+            this.loadingPanel = loadingPanel;
             this.graphicsContext = Application.Current.Container.Resolve<GraphicsContext>();
             this.screenContextManager = Application.Current.Container.Resolve<ScreenContextManager>();
             this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
@@ -70,7 +72,7 @@ namespace NetTripoAI.UI
 
                     ImguiNative.igSameLine(0, 4);
                     if (ImguiNative.igButton("Create", buttonSize))
-                    {
+                    {                        
                         string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
                         var index = prompt.IndexOf('\0');
                         if (index >= 0)
@@ -83,12 +85,13 @@ namespace NetTripoAI.UI
                     }
 
                     ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.status);
-                    ////if (this.image != IntPtr.Zero)
-
-                    if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
+                    if (this.image != IntPtr.Zero)
                     {
-                        this.DownloadModel(this.tripoResponse.data.result.model.url);
-                        this.OpenWindow = false;
+                        if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
+                        {
+                            this.DownloadModel(this.tripoResponse.data.result.model.url);
+                            this.OpenWindow = false;
+                        }
                     }
 
                 }
@@ -99,8 +102,11 @@ namespace NetTripoAI.UI
 
         private void RequestDraftModel(string prompt)
         {
+            if (this.isBusy) return;
+
             Task.Run(async () =>
             {
+                this.isBusy = true;
                 // Request draft model
                 this.progress = 0;
                 var taskId = await this.tripoAIService.RequestADraftModel(prompt);
@@ -114,7 +120,7 @@ namespace NetTripoAI.UI
                     await Task.Delay(100);
                     this.tripoResponse = await this.tripoAIService.GetTaskStatus(taskId);
                     this.progress = this.tripoResponse.data.progress;
-                    this.status = $"task status:{this.progress}";
+                    this.status = $"task status:{taskStatus} progress:{this.progress}";
 
 
                     taskStatus = this.tripoResponse.data.status;
@@ -129,13 +135,19 @@ namespace NetTripoAI.UI
                 this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
                 this.status = $"Done!";
+
+                this.isBusy = false;
             });
         }
 
         private void DownloadModel(string modelUrl)
         {
+            if (this.isBusy) return;
+
             Task.Run(async () =>
             {
+                this.loadingPanel.Enabled = true;
+
                 var model = await this.tripoAIService.DownloadModelFromURL(modelUrl);
 
                 var currentScene = screenContextManager.CurrentContext[0];
@@ -157,6 +169,8 @@ namespace NetTripoAI.UI
                 root.AddComponent(new StaticBody3D());
 
                 currentScene.Managers.EntityManager.Add(root);
+
+                this.loadingPanel.Enabled = false;
             });
         }
     }
