@@ -167,6 +167,7 @@ namespace NetTripoAI.UI
                     Offset = boundingBox.Center,
                 });
                 root.AddComponent(new StaticBody3D());
+                root.AddComponent(new Manipulation());
 
                 currentScene.Managers.EntityManager.Add(root);
 

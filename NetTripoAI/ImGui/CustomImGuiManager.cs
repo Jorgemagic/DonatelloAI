@@ -8,6 +8,7 @@ using Evergine.Bindings.Implot;
 using Evergine.Common.Graphics;
 using Evergine.Common.Input.Keyboard;
 using Evergine.Common.Input.Mouse;
+using Evergine.Components.Cameras;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Managers;
@@ -46,6 +47,7 @@ namespace NetTripoAI.ImGui
         private Matrix4x4 mvp;
 
         private Camera camera;
+        private FreeCamera3D cameraBehavior;
 
         /// <summary>
         ///  Gets or Sets a value indicating whether the Imguizmo extension is enabled.
@@ -61,6 +63,21 @@ namespace NetTripoAI.ImGui
         ///  Gets or Sets a value indicating whether the Imnodes extension is enabled.
         /// </summary>
         public bool ImNodesEnabled { get; set; }
+
+        private bool focus;
+        public bool ImGuiMouseFocus
+        {
+            get => this.focus;
+
+            set
+            {
+                if (this.focus != value)
+                {
+                    this.focus = value;
+                    this.cameraBehavior.IsEnabled = !this.focus;
+                }
+            }
+        }
 
         private struct ResourceSetInfo
         {
@@ -91,6 +108,7 @@ namespace NetTripoAI.ImGui
         {
             base.OnActivated();
             this.camera = this.renderManager.ActiveCamera3D;
+            this.cameraBehavior = this.camera.Owner.FindComponent<FreeCamera3D>();
         }
 
         /// <inheritdoc/>
@@ -541,6 +559,8 @@ namespace NetTripoAI.ImGui
         private unsafe void DrawContext_OnPostRender(Evergine.Framework.Graphics.DrawContext drawContext, CommandBuffer commandBuffer)
         {
             ImguiNative.igRender();
+
+            this.ImGuiMouseFocus = Convert.ToBoolean(io->WantCaptureMouse);
 
             uint vertexOffsetInVertices = 0;
             uint indexOffsetInElements = 0;
