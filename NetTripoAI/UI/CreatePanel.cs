@@ -72,7 +72,7 @@ namespace NetTripoAI.UI
 
                     ImguiNative.igSameLine(0, 4);
                     if (ImguiNative.igButton("Create", buttonSize))
-                    {                        
+                    {
                         string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
                         var index = prompt.IndexOf('\0');
                         if (index >= 0)
@@ -126,15 +126,22 @@ namespace NetTripoAI.UI
                     taskStatus = this.tripoResponse.data.status;
                 }
 
-                // View draft model result                
-                var imageUrl = this.tripoResponse.data.result.rendered_image.url;
+                if (taskStatus == "success")
+                {
+                    // View draft model result                
+                    var imageUrl = this.tripoResponse.data.result.rendered_image.url;
 
-                this.status = $"Download image preview ...";
+                    this.status = $"Download image preview ...";
 
-                var textureImage = await this.tripoAIService.DownloadTextureFromUrl(imageUrl);
-                this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
+                    var textureImage = await this.tripoAIService.DownloadTextureFromUrl(imageUrl);
+                    this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
-                this.status = $"Done!";
+                    this.status = $"Done!";
+                }
+                else
+                {
+                    this.status = $"{taskStatus}";
+                }
 
                 this.isBusy = false;
             });
