@@ -46,7 +46,7 @@ namespace NetTripoAI.UI
             if (this.OpenWindow)
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(new Vector2(332, 420), ImGuiCond.None);
+                ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.None);
                 ImguiNative.igBegin("CreatePanel", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
@@ -85,8 +85,7 @@ namespace NetTripoAI.UI
                     ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.status);
                     ////if (this.image != IntPtr.Zero)
 
-                    ImguiNative.igImage(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, Vector4.Zero, Vector4.Zero);
-                    if (ImguiNative.igButton("Import model in Evergine", new Vector2(315, buttonSize.Y)))
+                    if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                     {
                         this.DownloadModel(this.tripoResponse.data.result.model.url);
                         this.OpenWindow = false;
