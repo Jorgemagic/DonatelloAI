@@ -19,7 +19,7 @@ namespace NetTripoAI.TripoAI
         [BindService]
         private GraphicsContext graphicsContext = null;
 
-        private string API_KEY = "tsk_XkCXIDcqAHVGd6lf3USxNfu2LLcWERKiHjAn0O5Wbi6";
+        private string API_KEY = "{YOUR APIKEY}";
 
         public async Task<string> RequestADraftModel(string promptText)
         {
