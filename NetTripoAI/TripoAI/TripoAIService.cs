@@ -20,7 +20,7 @@ namespace NetTripoAI.TripoAI
         [BindService]
         private GraphicsContext graphicsContext = null;
 
-        private string API_KEY = "tsk_U8f7ebX9wbUnP5c2xSQHuRS4M2NWuxZ0Kd4IEBoPvhP";
+        private string API_KEY = "{YOUR APIKEY}";
 
         private string MODEL_FOLDER = "Models";
 
