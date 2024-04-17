@@ -1,33 +1,7 @@
-# NetTripoAI
+# TripoAI.NET
 
-## Introduction
+[TripoAI](https://www.tripo3d.ai) offers a cutting-edge [API-Rest](https://platform.tripo3d.ai/docs/introduction) that seamlessly integrates AI-generated models into your applications or tools. With its initial version released just last March, we're witnessing just the beginning of its potential.
 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project.
+I've developed a desktop tool leveraging TripoAI's service alongside [Evergine](https://evergine.com/) to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials. It's a game-changer for those in need of free 3D models to prototype their scene creations.
 
-## Getting Started
-
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-
-1. Installation process
-2. Software dependencies
-3. Latest releases
-4. API references
-
-## Build and Test
-
-TODO: Describe and show how to build your code and run the tests.
-
-## Contribute
-
-TODO: Explain how other users and developers can contribute to make your code better.
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops).
-
-----
-Powered by **[Evergine](http://www.evergine.com)**
-
-LET'S CONNECT!
-
-- [Youtube](https://www.youtube.com/subscription_center?add_user=EvergineChannel)
-- [Twitter](https://twitter.com/EvergineTeam)
-- [Blog](http://geeks.ms/evergineteam/)
+[Youtube Video](https://youtu.be/4h0niYYxv08)
