@@ -4,4 +4,4 @@
 
 I've developed a desktop tool leveraging TripoAI's service alongside [Evergine](https://evergine.com/) to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials. It's a game-changer for those in need of free 3D models to prototype their scene creations.
 
-[Youtube Video](https://youtu.be/4h0niYYxv08)
+[![Video](Screenshots/TripoAI-screenshot.png)](https://youtu.be/4h0niYYxv08)
