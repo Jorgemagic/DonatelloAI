@@ -1,6 +1,5 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Bindings.Imguizmo;
-using Evergine.Common.Graphics;
 using Evergine.Common.Input;
 using Evergine.Common.Input.Keyboard;
 using Evergine.Framework;
@@ -8,17 +7,21 @@ using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using Evergine.UI;
 using NetTripoAI.ImGui;
+using NetTripoAI.SceneManagers;
 using System;
 
 namespace NetTripoAI.UI
 {
     public unsafe class UIBehavior : Behavior
     {
+        [BindService]
+        protected GraphicsPresenter graphicsPresenter;
+
         [BindSceneManager]
         private CustomImGuiManager imguiManager;
 
-        [BindService]
-        protected GraphicsPresenter graphicsPresenter;
+        [BindSceneManager]
+        private ModelCollectionManager modelCollectionManager;
 
         private CreatePanel createPanel;
         private LoadingPanel loadingPanel;
@@ -29,8 +32,8 @@ namespace NetTripoAI.UI
         {
             base.OnActivated();
 
-            this.loadingPanel = new LoadingPanel();
-            this.createPanel = new CreatePanel(imguiManager, this.loadingPanel);
+            this.createPanel = new CreatePanel(imguiManager, modelCollectionManager);
+            this.loadingPanel = new LoadingPanel(modelCollectionManager);
             this.modelContextMenu = new ModelContextMenu();
             this.taskListPanel = new TaskListPanel();
         }
@@ -71,6 +74,10 @@ namespace NetTripoAI.UI
             if (keyboardDispatcher?.ReadKeyState(Keys.Space) == ButtonState.Pressing)
             {
                 this.createPanel.OpenWindow = true;
+            }
+            if (keyboardDispatcher?.ReadKeyState(Keys.T) == ButtonState.Pressing)
+            {
+                this.taskListPanel.OpenWindow = true;
             }
         }
     }

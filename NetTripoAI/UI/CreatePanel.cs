@@ -1,15 +1,11 @@
 ﻿using Evergine.Bindings.Imgui;
-using Evergine.Common.Graphics;
 using Evergine.Framework;
-using Evergine.Framework.Graphics;
-using Evergine.Framework.Physics3D;
-using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using Evergine.UI;
 using NetTripoAI.ImGui;
+using NetTripoAI.SceneManagers;
 using NetTripoAI.TripoAI;
 using System;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,31 +13,25 @@ namespace NetTripoAI.UI
 {
     public class CreatePanel
     {
-        private TripoAIService tripoAIService;
+        private TripoAIService tripoAIService;      
 
-        private GraphicsContext graphicsContext;
-        private ScreenContextManager screenContextManager;
-        private AssetsService assetsService;
-        private LoadingPanel loadingPanel;
         public bool OpenWindow = true;
         private byte[] textBuffer = new byte[256];
 
         private bool firstTime = true;
         private IntPtr image;
         private CustomImGuiManager imGuiManager;
+        private ModelCollectionManager modelCollectionManager;
         private int progress = 0;
         private string status = string.Empty;
         private bool isBusy;
         private TripoResponse tripoResponse;
 
-        public CreatePanel(CustomImGuiManager manager, LoadingPanel loadingPanel)
+        public CreatePanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
         {
-            this.imGuiManager = manager;
-            this.loadingPanel = loadingPanel;
-            this.graphicsContext = Application.Current.Container.Resolve<GraphicsContext>();
-            this.screenContextManager = Application.Current.Container.Resolve<ScreenContextManager>();
-            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
-            this.assetsService = Application.Current.Container.Resolve<AssetsService>();
+            this.imGuiManager = manager;   
+            this.modelCollectionManager = modelCollectionManager;
+            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();            
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -92,7 +82,7 @@ namespace NetTripoAI.UI
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                         {                                                        
-                            this.DownloadModel(this.tripoResponse.data.result.model.url);
+                            this.modelCollectionManager.DownloadModel(this.tripoResponse.data.result.model.url);
                             this.OpenWindow = false;
                         }
                     }
@@ -147,41 +137,7 @@ namespace NetTripoAI.UI
 
                 this.isBusy = false;
             });
-        }
-
-        private void DownloadModel(string modelUrl)
-        {
-            if (this.isBusy) return;
-
-            Task.Run(async () =>
-            {
-                this.loadingPanel.Enabled = true;
-
-                var model = await this.tripoAIService.DownloadModelFromURL(modelUrl);
-
-                var currentScene = screenContextManager.CurrentContext[0];
-
-                var entity = model.InstantiateModelHierarchy(this.assetsService);
-
-                var root = new Entity()
-                                .AddComponent(new Transform3D());
-                root.AddChild(entity);
-
-                var boundingBox = model.BoundingBox.Value;
-                boundingBox.Transform(entity.FindComponent<Transform3D>().WorldTransform);
-                root.FindComponent<Transform3D>().Scale = Vector3.One * (1.0f / boundingBox.HalfExtent.Length());
-                root.AddComponent(new BoxCollider3D()
-                {
-                    Size = boundingBox.HalfExtent * 2,
-                    Offset = boundingBox.Center,
-                });
-                root.AddComponent(new StaticBody3D());
-
-                currentScene.Managers.EntityManager.Add(root);
-
-                this.loadingPanel.Enabled = false;
-            });
-        }
+        }        
 
         private void RequestAnimateModel(string task_id)
         {

@@ -2,17 +2,23 @@
 using Evergine.Common.Graphics;
 using Evergine.Mathematics;
 using Evergine.UI;
+using NetTripoAI.SceneManagers;
 
 namespace NetTripoAI.UI
 {
     public unsafe class LoadingPanel
     {
         private bool imguiBars = true;
-        public bool Enabled;
+        private bool isBusy;
+
+        public LoadingPanel(ModelCollectionManager modelCollectionManager)
+        {
+            modelCollectionManager.IsBusyChanged += (s,e) => this.isBusy = e;
+        }
 
         public void Show(ref ImGuiIO* io)
         {
-            if (!this.Enabled)
+            if (!this.isBusy)
             {
                 return;
             }
