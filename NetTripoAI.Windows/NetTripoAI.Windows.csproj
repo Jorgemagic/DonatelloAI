@@ -18,4 +18,9 @@
 	<ItemGroup Condition="$(DefineConstants.Contains('EVERGINE_EDITOR'))">
 		<ProjectReference Include="..\NetTripoAI.Editor\NetTripoAI.Editor.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <None Update="FBX2glTF.exe">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

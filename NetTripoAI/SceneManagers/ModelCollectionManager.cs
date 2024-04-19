@@ -1,4 +1,5 @@
 ﻿using Evergine.Framework;
+using Evergine.Framework.Assets;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Managers;
 using Evergine.Framework.Physics3D;
@@ -8,7 +9,9 @@ using NetTripoAI.Importers.GLB;
 using NetTripoAI.TripoAI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -29,7 +32,9 @@ namespace NetTripoAI.SceneManagers
         public Entity CurrentSelectedEntity = null;
 
         private bool isBusy = false;
-        private string MODEL_FOLDER = "Models";
+        private const string MODEL_FOLDER = "Models";
+        private const string TEMP_FOLDER = "Temp";
+        private const string FBX2GLB_Path = "FBX2glTF.exe";
 
         public void AddModel(string modelName, string task_id)
         {
@@ -102,6 +107,7 @@ namespace NetTripoAI.SceneManagers
             string fileNameWithExtension = Path.GetFileName(url);
             fileNameWithExtension = fileNameWithExtension.Substring(0, fileNameWithExtension.IndexOf("?"));
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
+            string extension = Path.GetExtension(fileNameWithExtension);
             string filePath = Path.Combine(MODEL_FOLDER, fileNameWithExtension);
 
             int index = 1;
@@ -109,7 +115,7 @@ namespace NetTripoAI.SceneManagers
             while (File.Exists(filePath))
             {
                 fileName = $"{fileNameWithoutExtension}{index++}";
-                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}.glb");
+                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{extension}");
             }
 
             return (filePath, fileName);
@@ -127,10 +133,26 @@ namespace NetTripoAI.SceneManagers
                     // Save file to disc
                     await this.DownloadFileTaskAsync(client, new Uri(url), filePath);
 
+                    // Extract files
+                    if (Path.GetExtension(filePath) == ".zip")
+                    {                        
+                        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
+                        string outputPath = Path.Combine(TEMP_FOLDER, fileNameWithoutExt);
+                        ZipFile.ExtractToDirectory(filePath, outputPath);
+
+                        string fbxPath = Path.Combine(outputPath, "out.FBX");
+                        string glbPath = Path.Combine(MODEL_FOLDER, "out.glb");
+                        await this.FBXtoGLB(fbxPath, glbPath);
+                        filePath = glbPath;
+                    }
+
                     // Read file
-                    using (var fileStream = await response.Content.ReadAsStreamAsync())
+                    if (Path.GetExtension(filePath) == ".glb")
                     {
-                        result = await GLBRuntime.Instance.Read(fileStream);
+                        using (var fileStream = new FileStream(filePath, FileMode.Open))
+                        {
+                            result = await GLBRuntime.Instance.Read(fileStream);
+                        }
                     }
                 }
             }
@@ -147,6 +169,28 @@ namespace NetTripoAI.SceneManagers
                     await s.CopyToAsync(fs);
                 }
             }
+        }
+
+        private Task<int> FBXtoGLB(string fbxPath, string glbPath)
+        {
+            var tcs = new TaskCompletionSource<int>();
+            string arguments = $"-i {fbxPath} -b -o {glbPath}";
+
+            var process = new Process
+            {
+                StartInfo = { FileName = FBX2GLB_Path, Arguments = arguments },
+                EnableRaisingEvents = true,
+            };
+
+            process.Exited += (s, e) =>
+            {
+                tcs.SetResult(process.ExitCode);
+                process.Dispose();
+            };
+
+            process.Start();
+
+            return tcs.Task;
         }
     }
 }

@@ -42,7 +42,8 @@ namespace NetTripoAI.Components
             var mouseDispatcher = camera.Display?.MouseDispatcher;
             if (mouseDispatcher != null)
             {
-                if (mouseDispatcher.ReadButtonState(MouseButtons.Left) == ButtonState.Pressing)
+                if (mouseDispatcher.ReadButtonState(MouseButtons.Left) == ButtonState.Pressing ||
+                    mouseDispatcher.ReadButtonState(MouseButtons.Right) == ButtonState.Pressing)
                 {
                     var pos = mouseDispatcher.Position.ToVector2();
 
