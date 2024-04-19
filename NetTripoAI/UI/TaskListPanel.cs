@@ -2,7 +2,6 @@
 using Evergine.Mathematics;
 using Evergine.UI;
 using NetTripoAI.SceneManagers;
-using System.Threading.Tasks;
 
 namespace NetTripoAI.UI
 {

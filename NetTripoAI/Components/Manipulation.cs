@@ -1,16 +1,15 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Bindings.Imguizmo;
-using Evergine.Common.Input.Keyboard;
 using Evergine.Common.Input;
+using Evergine.Common.Input.Keyboard;
+using Evergine.Common.Input.Mouse;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
-using Evergine.Framework.Physics3D;
+using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using Evergine.UI;
-using System;
-using Evergine.Framework.Services;
-using Evergine.Common.Input.Mouse;
 using NetTripoAI.SceneManagers;
+using System;
 
 namespace NetTripoAI.Components
 {
