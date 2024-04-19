@@ -26,6 +26,8 @@ namespace NetTripoAI.SceneManagers
 
         private Dictionary<string, string> collection = new Dictionary<string, string>();
 
+        public Entity CurrentSelectedEntity = null;
+
         private bool isBusy = false;
         private string MODEL_FOLDER = "Models";
 
@@ -34,9 +36,21 @@ namespace NetTripoAI.SceneManagers
             this.collection.Add(modelName, task_id);
         }
 
-        public string FindTaskByModelName(string modelName)
+        public string FindTaskByCurrentSelectedEntity()
         {
-            return this.collection[modelName];
+            if (this.CurrentSelectedEntity != null)
+            {
+                string tag = this.CurrentSelectedEntity.Tag;
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    if (this.collection.TryGetValue(tag, out string result))
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public void DownloadModel(TripoResponse tripoResponse)
@@ -56,6 +70,12 @@ namespace NetTripoAI.SceneManagers
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
 
+                var previous = this.Managers.EntityManager.FindAllByTag(result.fileName);
+                foreach ( var p in previous ) 
+                {
+                    this.Managers.EntityManager.Remove(p);
+                }
+                
                 var root = new Entity() { Tag = result.fileName }
                                 .AddComponent(new Transform3D());
                 root.AddChild(entity);

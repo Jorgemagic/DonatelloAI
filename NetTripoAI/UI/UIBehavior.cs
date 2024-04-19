@@ -23,6 +23,9 @@ namespace NetTripoAI.UI
         [BindSceneManager]
         private ModelCollectionManager modelCollectionManager = null;
 
+        [BindSceneManager]
+        private TaskManager taskManager = null;
+
         private CreatePanel createPanel;
         private LoadingPanel loadingPanel;
         private ModelContextMenu modelContextMenu;
@@ -34,8 +37,8 @@ namespace NetTripoAI.UI
 
             this.createPanel = new CreatePanel(imguiManager, modelCollectionManager);
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
-            this.modelContextMenu = new ModelContextMenu();
-            this.taskListPanel = new TaskListPanel();
+            this.modelContextMenu = new ModelContextMenu(taskManager);
+            this.taskListPanel = new TaskListPanel(taskManager);
         }
 
         protected override void Update(TimeSpan gameTime)

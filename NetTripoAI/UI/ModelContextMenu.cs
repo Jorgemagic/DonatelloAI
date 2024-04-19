@@ -1,6 +1,7 @@
 ﻿using Evergine.Bindings.Imgui;
 using Evergine.Mathematics;
 using Evergine.UI;
+using NetTripoAI.SceneManagers;
 
 namespace NetTripoAI.UI
 {
@@ -9,6 +10,13 @@ namespace NetTripoAI.UI
         private bool showContextMenu;
         private bool imguiBars;
         private Vector2 contextMenuPosition;
+
+        private TaskManager taskManager = null;
+
+        public ModelContextMenu(TaskManager taskManager)
+        {
+            this.taskManager = taskManager;
+        }
 
         public unsafe void Show(ref ImGuiIO* io)
         {
@@ -21,11 +29,7 @@ namespace NetTripoAI.UI
 
                 this.showContextMenu = true;
                 return;
-            }
-            else if (ImguiNative.igIsMouseClicked(ImGuiMouseButton.Left, false))
-            {
-                this.showContextMenu = false;
-            }
+            }            
 
             // Context menu UI
             if (this.showContextMenu)
@@ -37,18 +41,24 @@ namespace NetTripoAI.UI
                 ImguiNative.igText("Options");
                 Vector2 buttonSize = new Vector2(80, 20);
                 if (ImguiNative.igButton("Refine", buttonSize))
-                {                    
+                {
+                    this.taskManager.RequestRefineModel();                    
                     this.showContextMenu = false;
                 }
 
                 if (ImguiNative.igButton("Animate", buttonSize))
                 {
+                    this.taskManager.RequestAnimateModel();
                     this.showContextMenu = false;
-                }                
+                }
 
                 ImguiNative.igEnd();
             }
-        }
 
+            //if (ImguiNative.igIsMouseClicked(ImGuiMouseButton.Left, false))
+            //{
+            //    this.showContextMenu = false;
+            //}
+        }            
     }
 }

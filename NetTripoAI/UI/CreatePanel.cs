@@ -23,7 +23,7 @@ namespace NetTripoAI.UI
         private CustomImGuiManager imGuiManager;
         private ModelCollectionManager modelCollectionManager;
         private int progress = 0;
-        private string status = string.Empty;
+        private string msg = string.Empty;
         private bool isBusy;
         private TripoResponse tripoResponse;
 
@@ -64,8 +64,6 @@ namespace NetTripoAI.UI
                     ImguiNative.igSameLine(0, 4);
                     if (ImguiNative.igButton("Create", buttonSize))
                     {
-                        ////this.RequestAnimateModel("70984fdb-103d-4bb7-9e72-7d5d821d70a9");
-
                         string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
                         var index = prompt.IndexOf('\0');
                         if (index >= 0)
@@ -77,7 +75,7 @@ namespace NetTripoAI.UI
                         this.RequestDraftModel(prompt);
                     }
 
-                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.status);
+                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.msg);
                     if (this.image != IntPtr.Zero)
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
@@ -104,79 +102,39 @@ namespace NetTripoAI.UI
                 var taskId = await this.tripoAIService.RequestADraftModel(prompt);
 
                 // Waiting to task completed                
-                string taskStatus = string.Empty;
-                while (taskStatus == string.Empty ||
-                       taskStatus == "queued" ||
-                       taskStatus == "running")
+                string status = string.Empty;
+                while (status == string.Empty ||
+                       status == "queued" ||
+                       status == "running")
                 {
                     await Task.Delay(100);
                     this.tripoResponse = await this.tripoAIService.GetTaskStatus(taskId);
                     this.progress = this.tripoResponse.data.progress;
-                    this.status = $"task status:{taskStatus} progress:{this.progress}";
+                    this.msg = $"status:{status} progress:{this.progress}";
 
 
-                    taskStatus = this.tripoResponse.data.status;
+                    status = this.tripoResponse.data.status;
                 }
 
-                if (taskStatus == "success")
+                if (status == "success")
                 {
                     // View draft model result                
                     var imageUrl = this.tripoResponse.data.result.rendered_image.url;
 
-                    this.status = $"Download image preview ...";
+                    this.msg = $"Download image preview ...";
 
                     var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
                     this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
-                    this.status = $"Done!";
+                    this.msg = $"Done!";
                 }
                 else
                 {
-                    this.status = $"{taskStatus}";
+                    this.msg = $"{status}";
                 }
 
                 this.isBusy = false;
             });
-        }        
-
-        private void RequestAnimateModel(string task_id)
-        {
-            if (this.isBusy) return;
-
-            Task.Run(async () =>
-            {
-                this.isBusy = true;
-
-                // Request animate Model
-                this.progress = 0;
-                var animateTaskId = await this.tripoAIService.RequestAnimateModel(task_id);
-
-                // Waiting to task completed                
-                string taskStatus = string.Empty;
-                while (taskStatus == string.Empty ||
-                       taskStatus == "queued" ||
-                       taskStatus == "running")
-                {
-                    await Task.Delay(100);
-                    this.tripoResponse = await this.tripoAIService.GetTaskStatus(animateTaskId);
-                    this.progress = this.tripoResponse.data.progress;
-                    this.status = $"task status:{taskStatus} progress:{this.progress}";
-
-
-                    taskStatus = this.tripoResponse.data.status;
-                }
-
-                if (taskStatus == "success")
-                {
-                    var r = this.tripoResponse;                    
-                }
-                else
-                {
-                    this.status = $"{taskStatus}";
-                }
-
-                this.isBusy = false;
-            });
-        }
+        }                        
     }
 }
