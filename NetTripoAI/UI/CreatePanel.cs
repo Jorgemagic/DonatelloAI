@@ -9,6 +9,7 @@ using Evergine.UI;
 using NetTripoAI.ImGui;
 using NetTripoAI.TripoAI;
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,7 +50,7 @@ namespace NetTripoAI.UI
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
                 ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.None);
-                ImguiNative.igBegin("CreatePanel", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
+                ImguiNative.igBegin("Create Panel", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
                 fixed (byte* buff = textBuffer)
@@ -73,6 +74,8 @@ namespace NetTripoAI.UI
                     ImguiNative.igSameLine(0, 4);
                     if (ImguiNative.igButton("Create", buttonSize))
                     {
+                        ////this.RequestAnimateModel("70984fdb-103d-4bb7-9e72-7d5d821d70a9");
+
                         string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
                         var index = prompt.IndexOf('\0');
                         if (index >= 0)
@@ -88,12 +91,11 @@ namespace NetTripoAI.UI
                     if (this.image != IntPtr.Zero)
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
-                        {
+                        {                                                        
                             this.DownloadModel(this.tripoResponse.data.result.model.url);
                             this.OpenWindow = false;
                         }
                     }
-
                 }
 
                 ImguiNative.igEnd();
@@ -178,6 +180,46 @@ namespace NetTripoAI.UI
                 currentScene.Managers.EntityManager.Add(root);
 
                 this.loadingPanel.Enabled = false;
+            });
+        }
+
+        private void RequestAnimateModel(string task_id)
+        {
+            if (this.isBusy) return;
+
+            Task.Run(async () =>
+            {
+                this.isBusy = true;
+
+                // Request animate Model
+                this.progress = 0;
+                var animateTaskId = await this.tripoAIService.RequestAnimateModel(task_id);
+
+                // Waiting to task completed                
+                string taskStatus = string.Empty;
+                while (taskStatus == string.Empty ||
+                       taskStatus == "queued" ||
+                       taskStatus == "running")
+                {
+                    await Task.Delay(100);
+                    this.tripoResponse = await this.tripoAIService.GetTaskStatus(animateTaskId);
+                    this.progress = this.tripoResponse.data.progress;
+                    this.status = $"task status:{taskStatus} progress:{this.progress}";
+
+
+                    taskStatus = this.tripoResponse.data.status;
+                }
+
+                if (taskStatus == "success")
+                {
+                    var r = this.tripoResponse;                    
+                }
+                else
+                {
+                    this.status = $"{taskStatus}";
+                }
+
+                this.isBusy = false;
             });
         }
     }

@@ -29,6 +29,8 @@
     {
         public string model { get; set; }
         public string rendered_image { get; set; }
+
+        public string rendered_video { get; set; }
     }
 
     public class Result

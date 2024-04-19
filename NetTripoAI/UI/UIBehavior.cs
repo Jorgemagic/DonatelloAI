@@ -22,6 +22,8 @@ namespace NetTripoAI.UI
 
         private CreatePanel createPanel;
         private LoadingPanel loadingPanel;
+        private ModelContextMenu modelContextMenu;
+        private TaskListPanel taskListPanel;
 
         protected override void OnActivated()
         {
@@ -29,11 +31,15 @@ namespace NetTripoAI.UI
 
             this.loadingPanel = new LoadingPanel();
             this.createPanel = new CreatePanel(imguiManager, this.loadingPanel);
+            this.modelContextMenu = new ModelContextMenu();
+            this.taskListPanel = new TaskListPanel();
         }
 
         protected override void Update(TimeSpan gameTime)
         {            
             var io = ImguiNative.igGetIO();
+            /*bool open = true;
+            ImguiNative.igShowDemoWindow(open.Pointer());*/
 
             // Imguizmo
             ImguizmoNative.ImGuizmo_SetRect(0, 0, io->DisplaySize.X, io->DisplaySize.Y);
@@ -57,6 +63,8 @@ namespace NetTripoAI.UI
             // Panels            
             this.createPanel.Show(ref io);
             this.loadingPanel.Show(ref io);
+            this.modelContextMenu.Show(ref io);
+            this.taskListPanel.Show(ref io);
 
             // Input
             KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
