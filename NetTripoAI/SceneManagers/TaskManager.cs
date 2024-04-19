@@ -27,24 +27,40 @@ namespace NetTripoAI.SceneManagers
 
                 if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
                 {
-                    // Request animate Model
-                    var refineTaskId = await this.tripoAIService.RequestRefineModel(task_id);
+                    TaskStatus taskStatus = new TaskStatus()
+                    {
+                        TaskId = task_id,
+                        Type = TaskStatus.TaskType.Refine,
+                        ModelName = entityTag,
+                        progress = 0,
+                        msg = "starting",
+                    };
+                    this.TaskCollection.Add(taskStatus);
 
+                    // Request refine Model
+                    ////var refineTaskId = await this.tripoAIService.RequestRefineModel(task_id);
+                    var refineTaskId = "9381c697-cba8-4522-90cb-f83b23d88cbd";
                     TripoResponse tripoResponse = null;
                     // Waiting to task completed                
-                    string taskStatus = string.Empty;
-                    while (taskStatus == string.Empty ||
-                           taskStatus == "queued" ||
-                           taskStatus == "running")
+                    string status = string.Empty;
+                    while (status == string.Empty ||
+                           status == "queued" ||
+                           status == "running")
                     {
                         await Task.Delay(100);
                         tripoResponse = await this.tripoAIService.GetTaskStatus(refineTaskId);
 
-                        taskStatus = tripoResponse.data.status;
+                        var data = tripoResponse.data;
+                        status = data.status;
+                        taskStatus.progress = data.progress;
+                        taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
-                    if (taskStatus == "success")
+                    if (status == "success")
                     {
+                        taskStatus.progress = 100;
+                        taskStatus.msg = $"status:{status}";
+
                         this.modelCollectionManager.DownloadModel(tripoResponse);
                     }
                 }
@@ -96,7 +112,8 @@ namespace NetTripoAI.SceneManagers
                     {
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
-                        var r = tripoResponse;
+
+                        this.modelCollectionManager.DownloadModel(tripoResponse);
                     }
                 }
             });

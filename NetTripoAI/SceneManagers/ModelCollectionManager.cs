@@ -69,12 +69,13 @@ namespace NetTripoAI.SceneManagers
                 var currentScene = screenContextManager.CurrentContext[0];
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
-
-                var previous = this.Managers.EntityManager.FindAllByTag(result.fileName);
+                
+                // Remove previous model
+                /*var previous = this.Managers.EntityManager.FindAllByTag(result.fileName);
                 foreach ( var p in previous ) 
                 {
                     this.Managers.EntityManager.Remove(p);
-                }
+                }*/
                 
                 var root = new Entity() { Tag = result.fileName }
                                 .AddComponent(new Transform3D());

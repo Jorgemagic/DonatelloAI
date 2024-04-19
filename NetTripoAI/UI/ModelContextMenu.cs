@@ -2,6 +2,7 @@
 using Evergine.Mathematics;
 using Evergine.UI;
 using NetTripoAI.SceneManagers;
+using System;
 
 namespace NetTripoAI.UI
 {
@@ -29,7 +30,12 @@ namespace NetTripoAI.UI
 
                 this.showContextMenu = true;
                 return;
-            }            
+            }
+            var isOverUI = Convert.ToBoolean(io->WantCaptureMouse);
+            if (ImguiNative.igIsMouseClicked(ImGuiMouseButton.Left, false) && !isOverUI)
+            {
+                this.showContextMenu = false;
+            }
 
             // Context menu UI
             if (this.showContextMenu)
@@ -53,12 +59,7 @@ namespace NetTripoAI.UI
                 }
 
                 ImguiNative.igEnd();
-            }
-
-            //if (ImguiNative.igIsMouseClicked(ImGuiMouseButton.Left, false))
-            //{
-            //    this.showContextMenu = false;
-            //}
+            }            
         }            
     }
 }
