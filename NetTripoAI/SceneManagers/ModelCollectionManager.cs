@@ -4,28 +4,30 @@ using Evergine.Framework.Managers;
 using Evergine.Framework.Physics3D;
 using Evergine.Framework.Services;
 using Evergine.Mathematics;
+using NetTripoAI.Importers.GLB;
 using NetTripoAI.TripoAI;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace NetTripoAI.SceneManagers
 {
     public class ModelCollectionManager : SceneManager
     {
-        [BindService]
-        private TripoAIService tripoAIService = null;
+        public event EventHandler<bool> IsBusyChanged;
 
         [BindService]
         private AssetsService assetsService = null;
 
-        [BindSceneManager]
+        [BindService]
         public ScreenContextManager screenContextManager = null;
 
         private Dictionary<string, string> collection = new Dictionary<string, string>();
-        private bool isBusy = false;
 
-        public event EventHandler<bool> IsBusyChanged;
+        private bool isBusy = false;
+        private string MODEL_FOLDER = "Models";
 
         public void AddModel(string modelName, string task_id)
         {
@@ -37,7 +39,7 @@ namespace NetTripoAI.SceneManagers
             return this.collection[modelName];
         }
 
-        public void DownloadModel(string modelUrl)
+        public void DownloadModel(TripoResponse tripoResponse)
         {
             if (this.isBusy) return;
 
@@ -45,13 +47,16 @@ namespace NetTripoAI.SceneManagers
             {
                 this.IsBusyChanged?.Invoke(this, true);
 
-                var model = await this.tripoAIService.DownloadModelFromURL(modelUrl);
+                string url = tripoResponse.data.result.model.url;
+                var result = this.GetFilePathFromUrl(url);
+                var model = await this.DownloadModelFromURL(url, result.filePath);
 
+                this.collection.Add(result.fileName, tripoResponse.data.task_id);
                 var currentScene = screenContextManager.CurrentContext[0];
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
 
-                var root = new Entity()
+                var root = new Entity() { Tag = result.fileName }
                                 .AddComponent(new Transform3D());
                 root.AddChild(entity);
 
@@ -69,6 +74,58 @@ namespace NetTripoAI.SceneManagers
 
                 this.IsBusyChanged?.Invoke(this, false);
             });
+        }
+
+        private (string filePath, string fileName) GetFilePathFromUrl(string url)
+        {
+            string fileNameWithExtension = Path.GetFileName(url);
+            fileNameWithExtension = fileNameWithExtension.Substring(0, fileNameWithExtension.IndexOf("?"));
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
+            string filePath = Path.Combine(MODEL_FOLDER, fileNameWithExtension);
+
+            int index = 1;
+            string fileName = fileNameWithoutExtension;
+            while (File.Exists(filePath))
+            {
+                fileName = $"{fileNameWithoutExtension}{index++}";
+                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}.glb");
+            }
+
+            return (filePath, fileName);
+        }
+
+        private async Task<Evergine.Framework.Graphics.Model> DownloadModelFromURL(string url, string filePath)
+        {
+            Evergine.Framework.Graphics.Model result = null;
+            using (HttpClient client = new HttpClient())
+            {
+                using (var response = await client.GetAsync(url))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    // Save file to disc
+                    await this.DownloadFileTaskAsync(client, new Uri(url), filePath);
+
+                    // Read file
+                    using (var fileStream = await response.Content.ReadAsStreamAsync())
+                    {
+                        result = await GLBRuntime.Instance.Read(fileStream);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private async Task DownloadFileTaskAsync(HttpClient client, Uri uri, string filePath)
+        {
+            using (var s = await client.GetStreamAsync(uri))
+            {
+                using (var fs = new FileStream(filePath, FileMode.CreateNew))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
         }
     }
 }

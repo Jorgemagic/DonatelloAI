@@ -17,12 +17,7 @@ namespace NetTripoAI.TripoAI
 {
     public class TripoAIService : Service
     {
-        [BindService]
-        private GraphicsContext graphicsContext = null;
-
         private string API_KEY = "{YOUR APIKEY}";
-
-        private string MODEL_FOLDER = "Models";
 
         public async Task<string> RequestADraftModel(string promptText)
         {
@@ -157,97 +152,6 @@ namespace NetTripoAI.TripoAI
             };
 
             return animateTaskId;
-        }
-
-        public async Task<Texture> DownloadTextureFromUrl(string url)
-        {
-            Texture result = null;
-            using (HttpClient cliente = new HttpClient())
-            {
-                using (var response = await cliente.GetAsync(url))
-                {
-                    response.EnsureSuccessStatusCode();
-
-                    using (var fileStream = await response.Content.ReadAsStreamAsync())
-                    {
-                        using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(fileStream))
-                        {
-                            RawImageLoader.CopyImageToArrayPool(image, out _, out byte[] data);
-                            await EvergineForegroundTask.Run(() =>
-                            {
-                                TextureDescription desc = new TextureDescription()
-                                {
-                                    Type = TextureType.Texture2D,
-                                    Width = (uint)image.Width,
-                                    Height = (uint)image.Height,
-                                    Depth = 1,
-                                    ArraySize = 1,
-                                    Faces = 1,
-                                    Usage = ResourceUsage.Default,
-                                    CpuAccess = ResourceCpuAccess.None,
-                                    Flags = TextureFlags.ShaderResource,
-                                    Format = PixelFormat.R8G8B8A8_UNorm,
-                                    MipLevels = 1,
-                                    SampleCount = TextureSampleCount.None,
-                                };
-                                result = this.graphicsContext.Factory.CreateTexture(ref desc);
-
-                                this.graphicsContext.UpdateTextureData(result, data);
-                            });
-                        }
-
-                        fileStream.Flush();
-                    }
-
-                    return result;
-                }
-            }
-        }
-
-        public async Task<Evergine.Framework.Graphics.Model> DownloadModelFromURL(string url)
-        {
-            Evergine.Framework.Graphics.Model result = null;
-            using (HttpClient client = new HttpClient())
-            {
-                using (var response = await client.GetAsync(url))
-                {
-                    response.EnsureSuccessStatusCode();
-
-                    // Set filepath
-                    string filename = Path.GetFileName(url);
-                    filename = filename.Substring(0, filename.IndexOf("?"));
-                    string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-                    string filePath = Path.Combine(MODEL_FOLDER, filename);
-
-                    int index = 1;
-                    while (File.Exists(filePath))
-                    {
-                        filePath = Path.Combine(MODEL_FOLDER, $"{fileNameWithoutExtension}{index++}.glb");
-                    }
-
-                    // Save file to disc
-                    await this.DownloadFileTaskAsync(client, new Uri(url), filePath);
-
-                    // Read file
-                    using (var fileStream = await response.Content.ReadAsStreamAsync())
-                    {
-                        result = await GLBRuntime.Instance.Read(fileStream);
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        public async Task DownloadFileTaskAsync(HttpClient client, Uri uri, string filePath)
-        {
-            using (var s = await client.GetStreamAsync(uri))
-            {                
-                using (var fs = new FileStream(filePath, FileMode.CreateNew))
-                {
-                    await s.CopyToAsync(fs);
-                }
-            }
-        }
+        }        
     }
 }

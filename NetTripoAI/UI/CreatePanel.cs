@@ -82,7 +82,7 @@ namespace NetTripoAI.UI
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                         {                                                        
-                            this.modelCollectionManager.DownloadModel(this.tripoResponse.data.result.model.url);
+                            this.modelCollectionManager.DownloadModel(this.tripoResponse);
                             this.OpenWindow = false;
                         }
                     }
@@ -125,7 +125,7 @@ namespace NetTripoAI.UI
 
                     this.status = $"Download image preview ...";
 
-                    var textureImage = await this.tripoAIService.DownloadTextureFromUrl(imageUrl);
+                    var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
                     this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
                     this.status = $"Done!";
