@@ -22,16 +22,6 @@ Items:
           X: 1.0
           Y: 1.0
           Z: 1.0
-      - !Evergine.Components.Cameras.FreeCamera3D,Evergine.Components
-        Id: 07d3e21d-cd4b-412f-88a6-1331d8afa583
-        IsEnabled: true
-        MaxPitch: 1.49225616
-        MouseSensibility: 0.0299999993
-        MoveSpeed: 5.0
-        RotationSpeed: 5.0
-        TouchMoveAndOrientationRatio: 0.5
-        TouchSensibility: 1.0
-        UpdateOrder: 0.5
       - !Evergine.Framework.Graphics.Camera3D,Evergine.Framework
         Id: 5b10653e-93d2-48e7-884f-a07b2ac173ee
         Aperture: 1.0
@@ -70,6 +60,16 @@ Items:
         TAU: 1.10000002
         TagFilter: null
         UsePhysicalParameters: false
+      - !NetTripoAI.Components.CameraBehavior,NetTripoAI
+        Id: 1d4e0c06-06e5-4110-9b59-3ac24faa08f3
+        IsEnabled: true
+        MaxPitch: 1.49225652
+        MouseSensibility: 0.0299999993
+        MoveSpeed: 5.0
+        RotationSpeed: 5.0
+        TouchMoveAndOrientationRatio: 0.5
+        TouchSensibility: 1.0
+        UpdateOrder: 0.5
     Children: []
     Id: 9841b6b3-9c09-4b60-b442-a5c63257ee02
   - !Evergine.Framework.Assets.AssetSources.Entities.EntityItemModel,Evergine.Framework
@@ -153,7 +153,7 @@ Items:
         Id: bb44cd62-4d92-418a-8a42-bbc2ed2b6f07
         AsignedTo: Default
         IsEnabled: true
-        Material: afc8d4ba-b648-4374-9a2e-cd75470699d9
+        Material: 9a4b5517-3091-437f-b8d9-155de101694c
         UseCopy: false
       - !Evergine.Components.Graphics3D.SphereMesh,Evergine.Components
         Id: 3ef37285-f016-4173-bbf0-278ec1624224

@@ -15,13 +15,13 @@ namespace NetTripoAI.UI
     public unsafe class UIBehavior : Behavior
     {
         [BindService]
-        protected GraphicsPresenter graphicsPresenter;
+        protected GraphicsPresenter graphicsPresenter = null;
 
         [BindSceneManager]
-        private CustomImGuiManager imguiManager;
+        private CustomImGuiManager imguiManager = null;
 
         [BindSceneManager]
-        private ModelCollectionManager modelCollectionManager;
+        private ModelCollectionManager modelCollectionManager = null;
 
         private CreatePanel createPanel;
         private LoadingPanel loadingPanel;

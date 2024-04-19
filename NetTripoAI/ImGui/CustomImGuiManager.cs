@@ -13,6 +13,7 @@ using Evergine.Framework;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Managers;
 using Evergine.Mathematics;
+using NetTripoAI.Components;
 using Buffer = Evergine.Common.Graphics.Buffer;
 
 namespace NetTripoAI.ImGui
@@ -47,7 +48,7 @@ namespace NetTripoAI.ImGui
         private Matrix4x4 mvp;
 
         private Camera camera;
-        private FreeCamera3D cameraBehavior;
+        private CameraBehavior cameraBehavior;
 
         /// <summary>
         ///  Gets or Sets a value indicating whether the Imguizmo extension is enabled.
@@ -108,7 +109,7 @@ namespace NetTripoAI.ImGui
         {
             base.OnActivated();
             this.camera = this.renderManager.ActiveCamera3D;
-            this.cameraBehavior = this.camera.Owner.FindComponent<FreeCamera3D>();
+            this.cameraBehavior = this.camera.Owner.FindComponent<CameraBehavior>();
         }
 
         /// <inheritdoc/>
