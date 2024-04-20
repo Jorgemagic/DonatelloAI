@@ -31,13 +31,34 @@ namespace NetTripoAI.Components
 
         public Manipulation()
         {
-            operation = OPERATION.TRANSLATE | OPERATION.ROTATE;
+            operation = OPERATION.TRANSLATE;
         }
 
         protected override void Update(TimeSpan gameTime)
         {
             // Selected element
             var camera = Managers.RenderManager?.ActiveCamera3D;
+
+            var keyboardDispacher = camera.Display?.KeyboardDispatcher;
+            if ( keyboardDispacher != null)
+            {
+                if (keyboardDispacher.ReadKeyState(Keys.D1) == ButtonState.Pressing)
+                {
+                    this.operation = OPERATION.TRANSLATE;
+                }
+                else if (keyboardDispacher.ReadKeyState(Keys.D2) == ButtonState.Pressing)
+                {
+                    this.operation = OPERATION.ROTATE;
+                }
+                else if (keyboardDispacher.ReadKeyState(Keys.D3) == ButtonState.Pressing)
+                {
+                    this.operation = OPERATION.SCALE;
+                }
+                else if (keyboardDispacher.ReadKeyState(Keys.D4) == ButtonState.Pressing)
+                {
+                    this.operation = OPERATION.UNIVERSAL;
+                }
+            }
 
             var mouseDispatcher = camera.Display?.MouseDispatcher;
             if (mouseDispatcher != null)
@@ -63,7 +84,7 @@ namespace NetTripoAI.Components
                         selectedEntity = null;
                     }
                     this.modelCollectionManager.CurrentSelectedEntity = selectedEntity;
-                }
+                }                
 
 
                 // Show Manipulator

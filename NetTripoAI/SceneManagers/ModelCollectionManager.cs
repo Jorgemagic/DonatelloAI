@@ -5,6 +5,7 @@ using Evergine.Framework.Managers;
 using Evergine.Framework.Physics3D;
 using Evergine.Framework.Services;
 using Evergine.Mathematics;
+using glTFLoader.Schema;
 using NetTripoAI.Importers.GLB;
 using NetTripoAI.TripoAI;
 using System;
@@ -58,7 +59,7 @@ namespace NetTripoAI.SceneManagers
             return null;
         }
 
-        public void DownloadModel(TripoResponse tripoResponse)
+        public void DownloadModel(TripoResponse tripoResponse, string entityTag = null)
         {
             if (this.isBusy) return;
 
@@ -67,9 +68,9 @@ namespace NetTripoAI.SceneManagers
                 this.IsBusyChanged?.Invoke(this, true);
 
                 string url = tripoResponse.data.result.model.url;
-                var result = this.GetFilePathFromUrl(url);
+                var result = this.GetFilePathFromUrl(url, entityTag);
                 var model = await this.DownloadModelFromURL(url, result.filePath);
-
+                
                 this.collection.Add(result.fileName, tripoResponse.data.task_id);
                 var currentScene = screenContextManager.CurrentContext[0];
 
@@ -102,20 +103,21 @@ namespace NetTripoAI.SceneManagers
             });
         }
 
-        private (string filePath, string fileName) GetFilePathFromUrl(string url)
-        {
+        private (string filePath, string fileName) GetFilePathFromUrl(string url, string modelName = null)
+        {            
             string fileNameWithExtension = Path.GetFileName(url);
             fileNameWithExtension = fileNameWithExtension.Substring(0, fileNameWithExtension.IndexOf("?"));
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
-            string extension = Path.GetExtension(fileNameWithExtension);
-            string filePath = Path.Combine(MODEL_FOLDER, fileNameWithExtension);
 
-            int index = 1;
-            string fileName = fileNameWithoutExtension;
+            string fileName = modelName == null ? fileNameWithoutExtension : modelName;
+            string extension = Path.GetExtension(fileNameWithExtension);            
+
+            string filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{extension}");
+
+            int index = 1;            
             while (File.Exists(filePath))
             {
-                fileName = $"{fileNameWithoutExtension}{index++}";
-                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{extension}");
+                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{index++}{extension}");
             }
 
             return (filePath, fileName);
@@ -141,7 +143,7 @@ namespace NetTripoAI.SceneManagers
                         ZipFile.ExtractToDirectory(filePath, outputPath);
 
                         string fbxPath = Path.Combine(outputPath, "out.FBX");
-                        string glbPath = Path.Combine(MODEL_FOLDER, "out.glb");
+                        string glbPath = Path.Combine(MODEL_FOLDER, $"{Path.GetFileNameWithoutExtension(filePath)}.glb");
                         await this.FBXtoGLB(fbxPath, glbPath);
                         filePath = glbPath;
                     }
@@ -174,7 +176,7 @@ namespace NetTripoAI.SceneManagers
         private Task<int> FBXtoGLB(string fbxPath, string glbPath)
         {
             var tcs = new TaskCompletionSource<int>();
-            string arguments = $"-i {fbxPath} -b -o {glbPath}";
+            string arguments = $"-b --anim-framerate bake30 -i {fbxPath} -o {glbPath}";
 
             var process = new Process
             {
