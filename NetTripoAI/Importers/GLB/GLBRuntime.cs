@@ -1,5 +1,7 @@
 ﻿using Evergine.Common.Graphics;
+using Evergine.Components.Graphics3D;
 using Evergine.Framework;
+using Evergine.Framework.Animation;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Graphics.Effects;
 using Evergine.Framework.Graphics.Materials;
@@ -16,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using static glTFLoader.Schema.Material;
 using Buffer = Evergine.Common.Graphics.Buffer;
@@ -49,8 +52,10 @@ namespace NetTripoAI.Importers.GLB
         private Dictionary<int, Texture> images = new Dictionary<int, Texture>();
         private Dictionary<int, List<Mesh>> meshes = new Dictionary<int, List<Mesh>>();
         private List<MeshContainer> meshContainers = new List<MeshContainer>();
-        private List<NodeContent> allNodes = new List<NodeContent>();
+        private NodeContent[] allNodes;
         private List<int> rootIndices = new List<int>();
+        private Dictionary<string, AnimationClip> animations = new Dictionary<string, AnimationClip>();
+        private SkinContent[] skins;
 
         private Gltf glbModel;
         private byte[] binaryChunk;
@@ -145,7 +150,6 @@ namespace NetTripoAI.Importers.GLB
             this.images.Clear();
             this.meshes.Clear();
             this.meshContainers.Clear();
-            this.allNodes.Clear();
             this.rootIndices.Clear();
             this.binaryChunk = null;
         }
@@ -164,7 +168,9 @@ namespace NetTripoAI.Importers.GLB
             this.binaryChunk = result.Data;
 
             this.ReadBuffers();
+            this.ReadSkins();
             await this.ReadDefaultScene();
+            this.ReadAnimations();
 
             var materialCollection = new List<(string, Guid)>();
             foreach (var materialInfo in this.materials.Values)
@@ -179,6 +185,8 @@ namespace NetTripoAI.Importers.GLB
                 AllNodes = this.allNodes.ToArray(),
                 Materials = materialCollection,
                 RootNodes = this.rootIndices.ToArray(),
+                Animations = this.animations,
+                Skins = this.skins,
             };
 
             // Compute global bounding box
@@ -206,6 +214,7 @@ namespace NetTripoAI.Importers.GLB
                 var scene = this.glbModel.Scenes[defaultSceneId];
                 var nodeCount = scene.Nodes.Length;
 
+                this.allNodes = new NodeContent[this.glbModel.Nodes.Length];
                 for (int n = 0; n < nodeCount; n++)
                 {
                     int nodeId = scene.Nodes[n];
@@ -284,6 +293,10 @@ namespace NetTripoAI.Importers.GLB
                 {
                     Name = string.IsNullOrEmpty(glbMesh.Name) ? $"_Mesh_{meshId}" : this.MakeSafeName(glbMesh.Name),
                     Meshes = nodePrimitives,
+                    Skin = node.Skin != null ? this.skins[node.Skin.Value] : null,
+                    MorphTargetCount = 0,
+                    MorphTargets = null,
+                    MorphTargetWeights = new float[0],
                 };
                 meshContainer.RefreshBoundingBox();
 
@@ -300,9 +313,10 @@ namespace NetTripoAI.Importers.GLB
                 Children = children,
                 ChildIndices = childIndices,
                 Mesh = meshContainer,
+                Skin = node.Skin.HasValue ? this.skins[node.Skin.Value] : null,
             };
 
-            this.allNodes.Add(nodeContent);
+            this.allNodes[nodeId] = nodeContent;
 
             // Set parent to the children
             if (children != null)
@@ -313,7 +327,7 @@ namespace NetTripoAI.Importers.GLB
                 }
             }
 
-            return (nodeContent, this.allNodes.Count - 1);
+            return (nodeContent, nodeId);
         }
 
         private async Task<Mesh> ReadPrimitive(MeshPrimitive primitive)
@@ -368,9 +382,9 @@ namespace NetTripoAI.Importers.GLB
 
                         buffer = this.graphicsContext.Factory.CreateBuffer(attributePointer, ref bufferDesc);
                     });
-
+                    
                     currentLayout = new LayoutDescription()
-                                              .Add(elementDesc);
+                                                  .Add(elementDesc);
                     vertexBuffersList.Add(new VertexBuffer(buffer, currentLayout));
                 }
                 else
@@ -431,13 +445,6 @@ namespace NetTripoAI.Importers.GLB
             for (int i = 0; i < attributes.Length; i++)
             {
                 var attribute = attributes[i];
-                if (attribute.Key.Contains("JOINTS") ||
-                    attribute.Key.Contains("WEIGHTS"))
-                {
-                    // Discard JOINTS and WEIGHTS
-                    continue;
-                }
-
                 sortedAttriburtes.Add((attribute.Key, this.glbModel.Accessors[attribute.Value]));
             }
 
@@ -685,6 +692,9 @@ namespace NetTripoAI.Importers.GLB
 
                         case Accessor.TypeEnum.VEC4:
                             return 16;
+
+                        case Accessor.TypeEnum.MAT4:
+                            return 64;
                     }
             }
 
@@ -867,7 +877,7 @@ namespace NetTripoAI.Importers.GLB
             Texture result = null;
 
             using (Stream fileStream = this.glbModel.OpenImageFile(imageId, this.GetExternalFileSolver))
-            {
+            {                
                 using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(fileStream))
                 {
                     RawImageLoader.CopyImageToArrayPool(image, out _, out byte[] data);
@@ -914,6 +924,204 @@ namespace NetTripoAI.Importers.GLB
             }
 
             return name;
+        }
+
+        private void ReadAnimations()
+        {
+            if (this.glbModel.Animations == null) return;
+
+            var animationCount = this.glbModel.Animations?.Length;
+            for (int i = 0; i < animationCount; i++)
+            {
+                var gltfAnimation = this.glbModel.Animations[i];
+                string name = string.IsNullOrEmpty(gltfAnimation.Name) ? $"Track{i}" : gltfAnimation.Name;
+                this.animations.Add(name, this.ReadAnimation(name, gltfAnimation));
+            }
+        }
+
+        private AnimationClip ReadAnimation(string name, Animation gltfAnimation)
+        {
+            // Asserts
+            if (gltfAnimation.Channels == null) return null;
+
+            var clip = new AnimationClip()
+            {
+                Name = name,
+                Duration = 0,
+            };
+
+            // Read Channels
+            var channelCount = gltfAnimation.Channels.Length;
+            for (int i = 0; i < channelCount; i++)
+            {
+                var gltfChannel = gltfAnimation.Channels[i];
+                var gltfSampler = gltfAnimation.Samplers[gltfChannel.Sampler];
+                var animationChannel = this.ReadAnimationChannel(clip, gltfChannel, gltfSampler);
+
+                clip.Duration = Math.Max(clip.Duration, animationChannel.Duration);
+                clip.AddChannel(animationChannel);
+            }
+
+            return clip;
+        }
+
+        private Evergine.Framework.Animation.AnimationChannel ReadAnimationChannel(AnimationClip clip, glTFLoader.Schema.AnimationChannel gltfChannel, AnimationSampler gltfSampler)
+        {
+            // Input Accessor
+            var inputAccessor = this.glbModel.Accessors[gltfSampler.Input];
+            var inputBufferView = this.glbModel.BufferViews[inputAccessor.BufferView.Value];
+            var inputOffset = inputBufferView.ByteOffset + inputAccessor.ByteOffset;
+            var inputStride = inputBufferView.ByteStride.HasValue ? inputBufferView.ByteStride.Value : this.SizeInBytes(inputAccessor);
+            var inputBuffer = this.bufferInfos[inputBufferView.Buffer];
+
+            // Output Accessor
+            var outputAccessor = this.glbModel.Accessors[gltfSampler.Output];
+            var outputBufferView = this.glbModel.BufferViews[outputAccessor.BufferView.Value];
+            var outputOffset = outputBufferView.ByteOffset + outputAccessor.ByteOffset;
+            var outputStride = outputBufferView.ByteStride.HasValue ? outputBufferView.ByteStride.Value : this.SizeInBytes(outputAccessor);
+            var outputBuffer = this.bufferInfos[outputBufferView.Buffer];
+
+            // Create animationChannel object
+            var animationChannel = new Evergine.Framework.Animation.AnimationChannel()
+            {
+                NodeIndex = gltfChannel.Target.Node.Value,
+                Duration = inputAccessor.Max.Length > 0 ? inputAccessor.Max[0] : 0,
+                Track = clip,
+            };
+
+            float curveDuration = 0;
+            switch (gltfChannel.Target.Path)
+            {
+                case AnimationChannelTarget.PathEnum.translation:
+                    var positionCurve = new AnimationCurveVector3();
+
+                    positionCurve.KeyCount = inputAccessor.Count;
+                    positionCurve.Keyframes = new AnimationKeyframe<Vector3>[positionCurve.KeyCount];
+                    for (int i = 0; i < positionCurve.KeyCount; i++)
+                    {
+                        positionCurve.Keyframes[i].Time = GLBHelpers.GetFloatFromBuffer(inputBuffer, inputOffset, inputStride, i);
+                        positionCurve.Keyframes[i].Value = GLBHelpers.GetVector3FromBuffer(outputBuffer, outputOffset, outputStride, i);
+                    }
+
+                    positionCurve.StartTime = positionCurve.Keyframes[0].Time;
+                    positionCurve.EndTime = positionCurve.Keyframes[positionCurve.Keyframes.Length - 1].Time;
+                    curveDuration = positionCurve.EndTime - positionCurve.StartTime;
+
+                    animationChannel.ComponentType = typeof(Transform3D);
+                    animationChannel.PropertyName = nameof(Transform3D.LocalPosition);
+                    animationChannel.Curve = positionCurve;
+
+                    break;
+                case AnimationChannelTarget.PathEnum.rotation:
+                    var quaternionCurve = new AnimationCurveQuaternion();
+
+                    quaternionCurve.KeyCount = inputAccessor.Count;
+                    quaternionCurve.Keyframes = new AnimationKeyframe<Quaternion>[quaternionCurve.KeyCount];
+
+                    for (int i = 0; i < quaternionCurve.KeyCount; i++)
+                    {
+                        quaternionCurve.Keyframes[i].Time = GLBHelpers.GetFloatFromBuffer(inputBuffer, inputOffset, inputStride, i);
+                        quaternionCurve.Keyframes[i].Value = GLBHelpers.GetQuaternionFromBuffer(outputBuffer, outputOffset, outputStride, i);
+                    }
+
+                    quaternionCurve.StartTime = quaternionCurve.Keyframes[0].Time;
+                    quaternionCurve.EndTime = quaternionCurve.Keyframes[quaternionCurve.Keyframes.Length - 1].Time;
+                    curveDuration = quaternionCurve.EndTime - quaternionCurve.StartTime;
+
+                    animationChannel.ComponentType = typeof(Transform3D);
+                    animationChannel.PropertyName = nameof(Transform3D.LocalOrientation);
+                    animationChannel.Curve = quaternionCurve;
+
+                    break;
+                case AnimationChannelTarget.PathEnum.scale:
+                    var scaleCurve = new AnimationCurveVector3();
+
+                    scaleCurve.KeyCount = inputAccessor.Count;
+                    scaleCurve.Keyframes = new AnimationKeyframe<Vector3>[scaleCurve.KeyCount];
+
+                    for (int i = 0; i < scaleCurve.KeyCount; i++)
+                    {
+                        scaleCurve.Keyframes[i].Time = GLBHelpers.GetFloatFromBuffer(inputBuffer, inputOffset, inputStride, i);
+                        scaleCurve.Keyframes[i].Value = GLBHelpers.GetVector3FromBuffer(outputBuffer, outputOffset, outputStride, i);
+                    }
+
+                    scaleCurve.StartTime = scaleCurve.Keyframes[0].Time;
+                    scaleCurve.EndTime = scaleCurve.Keyframes[scaleCurve.KeyCount - 1].Time;
+                    curveDuration = scaleCurve.EndTime - scaleCurve.StartTime;
+
+                    animationChannel.ComponentType = typeof(Transform3D);
+                    animationChannel.PropertyName = nameof(Transform3D.LocalScale);
+                    animationChannel.Curve = scaleCurve;
+
+                    break;
+                case AnimationChannelTarget.PathEnum.weights:
+
+                    int weightsCount = outputAccessor.Count / inputAccessor.Count;
+                    var weightsCurve = new AnimationCurveFloatArray(weightsCount);
+
+                    weightsCurve.KeyCount = inputAccessor.Count;
+                    weightsCurve.Keyframes = new AnimationKeyframe<float[]>[weightsCurve.KeyCount];
+
+                    for (int i = 0; i < weightsCurve.KeyCount; i++)
+                    {
+                        weightsCurve.Keyframes[i].Time = GLBHelpers.GetFloatFromBuffer(inputBuffer, inputOffset, inputStride, i);
+                        weightsCurve.Keyframes[i].Value = GLBHelpers.GetFloatArrayFromBuffer(outputBuffer, outputOffset, outputStride, i, weightsCount);
+                    }
+
+                    weightsCurve.StartTime = weightsCurve.Keyframes[0].Time;
+                    weightsCurve.EndTime = weightsCurve.Keyframes[weightsCurve.KeyCount - 1].Time;
+                    curveDuration = weightsCurve.EndTime - weightsCurve.StartTime;
+
+                    animationChannel.ComponentType = typeof(SkinnedMeshRenderer);
+                    animationChannel.PropertyName = nameof(SkinnedMeshRenderer.MorphTargetWeights);
+                    animationChannel.Curve = weightsCurve;
+
+                    break;
+                default:
+                    break;
+            }
+
+            animationChannel.Curve.Duration = curveDuration;
+
+            return animationChannel;
+        }
+
+        private void ReadSkins()
+        {
+            if (this.glbModel.Skins == null) return;
+
+            this.skins = new SkinContent[this.glbModel.Skins.Length];
+
+            for (int i = 0; i < this.skins.Length; i++)
+            {
+                var gltfSkin = this.glbModel.Skins[i];
+
+                Matrix4x4[] matrices = null;
+                if (gltfSkin.InverseBindMatrices.HasValue)
+                {
+                    var inverseBindMatrices = gltfSkin.InverseBindMatrices.Value;
+
+                    var matricesAccessor = this.glbModel.Accessors[inverseBindMatrices];
+                    var matricesBufferView = this.glbModel.BufferViews[matricesAccessor.BufferView.Value];
+                    var matricesStride = matricesBufferView.ByteStride.HasValue ? matricesBufferView.ByteStride.Value : this.SizeInBytes(matricesAccessor);
+                    var matricesBuffer = this.bufferInfos[matricesBufferView.Buffer];
+
+                    matrices = new Matrix4x4[matricesAccessor.Count];
+                    for (int m = 0; m < matricesAccessor.Count; m++)
+                    {
+                        matrices[m] = GLBHelpers.GetMatrix4x4(matricesBuffer, matricesBufferView.ByteOffset, matricesStride, m);
+                    }
+                }
+
+                var skinContent = new SkinContent()
+                {
+                    Name = gltfSkin.Name ?? string.Empty,
+                    RootJoint = gltfSkin.Skeleton ?? 0,
+                    Nodes = gltfSkin.Joints ?? null,
+                    InverseBindPoses = matrices,
+                };
+                this.skins[i] = skinContent;
+            }
         }
     }
 }

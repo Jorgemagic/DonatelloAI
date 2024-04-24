@@ -1,6 +1,8 @@
-﻿using glTFLoader.Schema;
+﻿using Evergine.Mathematics;
+using glTFLoader.Schema;
 using Newtonsoft.Json;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace NetTripoAI.Importers.GLB
@@ -78,6 +80,38 @@ namespace NetTripoAI.Importers.GLB
                     return data;
                 }
             }
+        }
+        internal static unsafe float GetFloatFromBuffer(BufferInfo buffer, int offset, int stride, int index)
+        {
+            return Unsafe.Read<float>((void*)(buffer.bufferPointer + offset + (index * stride)));
+        }
+
+        internal static unsafe Vector3 GetVector3FromBuffer(BufferInfo buffer, int offset, int stride, int index)
+        {
+            return Unsafe.Read<Vector3>((void*)(buffer.bufferPointer + offset + (index * stride)));
+        }
+
+        internal static unsafe Quaternion GetQuaternionFromBuffer(BufferInfo buffer, int offset, int stride, int index)
+        {
+            return Unsafe.Read<Quaternion>((void*)(buffer.bufferPointer + offset + (index * stride)));
+        }
+
+        internal static unsafe float[] GetFloatArrayFromBuffer(BufferInfo buffer, int offset, int stride, int index, int weightsCount)
+        {
+            var startPointer = (buffer.bufferPointer + offset + (index * stride));
+
+            float[] result = new float[weightsCount];
+            for (int i = 0; i < weightsCount; i++)
+            {
+                result[i] = *(float*)(startPointer + (sizeof(float) * i));
+            }
+
+            return result;
+        }
+
+        internal static unsafe Matrix4x4 GetMatrix4x4(BufferInfo buffer, int offset, int stride, int index)
+        {
+            return Unsafe.Read<Matrix4x4>((void*)(buffer.bufferPointer + offset + (index * stride)));
         }
     }
 }

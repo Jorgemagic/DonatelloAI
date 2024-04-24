@@ -73,7 +73,7 @@ namespace NetTripoAI.SceneManagers
             {
                 // Get task id
                 string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();
-                task_id = "70984fdb-103d-4bb7-9e72-7d5d821d70a9";
+                ////task_id = "70984fdb-103d-4bb7-9e72-7d5d821d70a9";
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
                 if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
@@ -89,8 +89,8 @@ namespace NetTripoAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request animate Model
-                    ////var animateTaskId = await this.tripoAIService.RequestAnimateModel(task_id);
-                    var animateTaskId = "63dd9653-45b3-4864-b18c-a20a80829431";
+                    var animateTaskId = await this.tripoAIService.RequestAnimateModel(task_id);
+                    ////var animateTaskId = "63dd9653-45b3-4864-b18c-a20a80829431";
 
                     TripoResponse tripoResponse = null;
                     // Waiting to task completed                

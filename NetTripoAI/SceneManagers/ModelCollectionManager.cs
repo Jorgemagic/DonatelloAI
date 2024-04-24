@@ -1,4 +1,5 @@
-﻿using Evergine.Framework;
+﻿using Evergine.Components.Animation;
+using Evergine.Framework;
 using Evergine.Framework.Assets;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Managers;
@@ -13,6 +14,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -96,6 +98,14 @@ namespace NetTripoAI.SceneManagers
                     Offset = boundingBox.Center,
                 });
                 root.AddComponent(new StaticBody3D());
+
+                // Animated models
+                var animate3D = entity.FindComponentInChildren<Animation3D>();
+                if (animate3D != null && animate3D.AnimationNames.Count() > 0)
+                {
+                    animate3D.CurrentAnimation = animate3D.AnimationNames.First();
+                    animate3D.PlayAutomatically = true;
+                }
 
                 currentScene.Managers.EntityManager.Add(root);
 
