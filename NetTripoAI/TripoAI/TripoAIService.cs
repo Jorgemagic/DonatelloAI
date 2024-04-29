@@ -10,10 +10,15 @@ namespace NetTripoAI.TripoAI
 {
     public class TripoAIService : Service
     {
-        private string API_KEY = "{YOUR APIKEY}";
+        public string API_KEY { get; set; }
 
         public async Task<string> RequestADraftModel(string promptText)
-        {
+        {            
+            if (string.IsNullOrEmpty(API_KEY))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
             string taskID = string.Empty;
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("type", "text_to_model");
@@ -53,6 +58,11 @@ namespace NetTripoAI.TripoAI
 
         public async Task<TripoResponse> GetTaskStatus(string task_id)
         {
+            if (string.IsNullOrEmpty(API_KEY))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
             TripoResponse tripoResponse = null;
             using (var client = new HttpClient())
             {
@@ -71,6 +81,11 @@ namespace NetTripoAI.TripoAI
 
         public async Task<string> RequestRefineModel(string task_id)
         {
+            if (string.IsNullOrEmpty(API_KEY))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("type", "refine_model");
             parameters.Add("draft_model_task_id", task_id);
@@ -110,6 +125,11 @@ namespace NetTripoAI.TripoAI
 
         public async Task<string> RequestAnimateModel(string task_id)
         {
+            if (string.IsNullOrEmpty(API_KEY))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("type", "animate_model");
             parameters.Add("original_model_task_id", task_id);
@@ -145,6 +165,6 @@ namespace NetTripoAI.TripoAI
             };
 
             return animateTaskId;
-        }        
+        }
     }
 }

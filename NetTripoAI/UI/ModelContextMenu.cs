@@ -44,18 +44,25 @@ namespace NetTripoAI.UI
                 ImguiNative.igSetNextWindowSize(new Vector2(96, 80), ImGuiCond.None);
                 ImguiNative.igBegin("Context Menu", this.imguiBars.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove);
 
-                ImguiNative.igText("Options");
-                Vector2 buttonSize = new Vector2(80, 20);
-                if (ImguiNative.igButton("Refine", buttonSize))
+                try
                 {
-                    this.taskManager.RequestRefineModel();                    
-                    this.showContextMenu = false;
-                }
+                    ImguiNative.igText("Options");
+                    Vector2 buttonSize = new Vector2(80, 20);
+                    if (ImguiNative.igButton("Refine", buttonSize))
+                    {
+                        this.taskManager.RequestRefineModel();
+                        this.showContextMenu = false;
+                    }
 
-                if (ImguiNative.igButton("Animate", buttonSize))
+                    if (ImguiNative.igButton("Animate", buttonSize))
+                    {
+                        this.taskManager.RequestAnimateModel();
+                        this.showContextMenu = false;
+                    }
+                }
+                catch (Exception ex)
                 {
-                    this.taskManager.RequestAnimateModel();
-                    this.showContextMenu = false;
+                    // Required API_KEY
                 }
 
                 ImguiNative.igEnd();

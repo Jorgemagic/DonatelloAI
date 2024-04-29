@@ -13,7 +13,7 @@ namespace NetTripoAI.UI
 {
     public class CreatePanel
     {
-        private TripoAIService tripoAIService;      
+        private TripoAIService tripoAIService;
 
         public bool OpenWindow = true;
         private byte[] textBuffer = new byte[256];
@@ -29,9 +29,9 @@ namespace NetTripoAI.UI
 
         public CreatePanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
         {
-            this.imGuiManager = manager;   
+            this.imGuiManager = manager;
             this.modelCollectionManager = modelCollectionManager;
-            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();            
+            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -71,7 +71,6 @@ namespace NetTripoAI.UI
                             prompt = prompt.Substring(0, index);
                         }
 
-                        // Create pressed
                         this.RequestDraftModel(prompt);
                     }
 
@@ -79,7 +78,7 @@ namespace NetTripoAI.UI
                     if (this.image != IntPtr.Zero)
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
-                        {                                                        
+                        {
                             this.modelCollectionManager.DownloadModel(this.tripoResponse);
                             this.OpenWindow = false;
                         }
@@ -97,44 +96,51 @@ namespace NetTripoAI.UI
             Task.Run(async () =>
             {
                 this.isBusy = true;
-                // Request draft model
-                this.progress = 0;
-                var taskId = await this.tripoAIService.RequestADraftModel(prompt);
 
-                // Waiting to task completed                
-                string status = string.Empty;
-                while (status == string.Empty ||
-                       status == "queued" ||
-                       status == "running")
+                try
                 {
-                    await Task.Delay(100);
-                    this.tripoResponse = await this.tripoAIService.GetTaskStatus(taskId);
-                    this.progress = this.tripoResponse.data.progress;
-                    this.msg = $"status:{status} progress:{this.progress}";
+                    // Request draft model
+                    this.progress = 0;
+                    var taskId = await this.tripoAIService.RequestADraftModel(prompt);
+
+                    // Waiting to task completed                
+                    string status = string.Empty;
+                    while (status == string.Empty ||
+                           status == "queued" ||
+                           status == "running")
+                    {
+                        await Task.Delay(100);
+                        this.tripoResponse = await this.tripoAIService.GetTaskStatus(taskId);
+                        this.progress = this.tripoResponse.data.progress;
+                        this.msg = $"status:{status} progress:{this.progress}";
 
 
-                    status = this.tripoResponse.data.status;
+                        status = this.tripoResponse.data.status;
+                    }
+
+                    if (status == "success")
+                    {
+                        // View draft model result                
+                        var imageUrl = this.tripoResponse.data.result.rendered_image.url;
+
+                        this.msg = $"Download image preview ...";
+
+                        var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
+                        this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
+
+                        this.msg = $"Done!";
+                    }
+                    else
+                    {
+                        this.msg = $"{status}";
+                    }
                 }
-
-                if (status == "success")
+                catch (Exception e) { }
+                finally
                 {
-                    // View draft model result                
-                    var imageUrl = this.tripoResponse.data.result.rendered_image.url;
-
-                    this.msg = $"Download image preview ...";
-
-                    var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
-                    this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
-
-                    this.msg = $"Done!";
+                    this.isBusy = false;
                 }
-                else
-                {
-                    this.msg = $"{status}";
-                }
-
-                this.isBusy = false;
             });
-        }                        
+        }
     }
 }

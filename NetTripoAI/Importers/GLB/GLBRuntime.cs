@@ -152,6 +152,8 @@ namespace NetTripoAI.Importers.GLB
             this.meshContainers.Clear();
             this.rootIndices.Clear();
             this.binaryChunk = null;
+            this.animations.Clear();
+            this.skins = null;
         }
 
         private async Task<Model> ReadGLB(Stream stream)
@@ -185,7 +187,7 @@ namespace NetTripoAI.Importers.GLB
                 AllNodes = this.allNodes.ToArray(),
                 Materials = materialCollection,
                 RootNodes = this.rootIndices.ToArray(),
-                Animations = this.animations,
+                Animations = this.animations.ToDictionary(e => e.Key, e => e.Value),
                 Skins = this.skins,
             };
 

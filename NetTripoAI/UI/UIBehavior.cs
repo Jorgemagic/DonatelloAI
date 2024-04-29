@@ -30,6 +30,7 @@ namespace NetTripoAI.UI
         private LoadingPanel loadingPanel;
         private ModelContextMenu modelContextMenu;
         private TaskListPanel taskListPanel;
+        private MenuBar menuBar;
 
         protected override void OnActivated()
         {
@@ -39,6 +40,7 @@ namespace NetTripoAI.UI
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
             this.modelContextMenu = new ModelContextMenu(taskManager);
             this.taskListPanel = new TaskListPanel(taskManager);
+            this.menuBar = new MenuBar();
         }
 
         protected override void Update(TimeSpan gameTime)
@@ -71,6 +73,7 @@ namespace NetTripoAI.UI
             this.loadingPanel.Show(ref io);
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
+            this.menuBar.Show(ref io);
 
             // Input
             KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
