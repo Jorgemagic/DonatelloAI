@@ -117,7 +117,8 @@ namespace NetTripoAI.UI
                             apikey = apikey.Substring(0, index);
                         }
 
-                        this.tripoAIService.API_KEY = apikey;
+                        this.tripoAIService.SetApiKey(apikey);
+                        this.showSettings = false;
                     }
                 }
 

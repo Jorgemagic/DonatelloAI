@@ -1,10 +1,7 @@
 using Evergine.Framework;
 using Evergine.Framework.Services;
-using Evergine.Framework.Threading;
 using Evergine.Platform;
-using NetTripoAI.ImGui;
 using NetTripoAI.TripoAI;
-using NetTripoAI.UI;
 
 namespace NetTripoAI
 {
@@ -12,7 +9,7 @@ namespace NetTripoAI
     {
         public MyApplication()
         {
-            this.Container.Register<Settings>();
+            this.Container.Register<Evergine.Framework.Services.Settings>();
             this.Container.Register<Clock>();
             this.Container.Register<TimerFactory>();
             this.Container.Register<Random>();

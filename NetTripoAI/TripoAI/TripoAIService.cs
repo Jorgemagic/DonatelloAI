@@ -1,7 +1,9 @@
 ﻿using Evergine.Framework.Services;
+using NetTripoAI.Settings;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,12 +11,39 @@ using System.Threading.Tasks;
 namespace NetTripoAI.TripoAI
 {
     public class TripoAIService : Service
-    {
-        public string API_KEY { get; set; }
+    {        
+        private readonly string filePath = "appSettings.json";
+
+        public string api_key;
+
+        public TripoAIService()
+        {            
+            if (File.Exists(filePath))
+            {
+                using (var reader = new StreamReader(this.filePath))
+                {
+                    string json = reader.ReadToEnd();
+                    var data = JsonConvert.DeserializeObject<ApiSettings>(json);
+                    this.api_key = data.TripoAIApiKey;
+                }
+            }
+        }  
+        
+        public void SetApiKey(string key)
+        {
+            this.api_key = key;
+            var apiSettings = new ApiSettings()
+            {
+                 TripoAIApiKey = this.api_key,
+            };
+
+            string json = JsonConvert.SerializeObject(apiSettings);
+            File.WriteAllText(this.filePath, json);
+        }
 
         public async Task<string> RequestADraftModel(string promptText)
         {            
-            if (string.IsNullOrEmpty(API_KEY))
+            if (string.IsNullOrEmpty(api_key))
             {
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
             }
@@ -28,7 +57,7 @@ namespace NetTripoAI.TripoAI
 
             using (HttpClient client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", API_KEY);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
                 string uri = "https://api.tripo3d.ai/v2/openapi/task";
                 StringContent jsonContent = new StringContent(parametersJsonString,
                      Encoding.UTF8,
@@ -58,7 +87,7 @@ namespace NetTripoAI.TripoAI
 
         public async Task<TripoResponse> GetTaskStatus(string task_id)
         {
-            if (string.IsNullOrEmpty(API_KEY))
+            if (string.IsNullOrEmpty(api_key))
             {
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
             }
@@ -66,7 +95,7 @@ namespace NetTripoAI.TripoAI
             TripoResponse tripoResponse = null;
             using (var client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", API_KEY);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
                 var result = await client.GetAsync($"https://api.tripo3d.ai/v2/openapi/task/{task_id}");
 
                 if (result.IsSuccessStatusCode)
@@ -81,7 +110,7 @@ namespace NetTripoAI.TripoAI
 
         public async Task<string> RequestRefineModel(string task_id)
         {
-            if (string.IsNullOrEmpty(API_KEY))
+            if (string.IsNullOrEmpty(api_key))
             {
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
             }
@@ -95,7 +124,7 @@ namespace NetTripoAI.TripoAI
             string refineTaskId = string.Empty;
             using (HttpClient client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", API_KEY);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
                 string uri = "https://api.tripo3d.ai/v2/openapi/task";
                 StringContent jsonContent = new StringContent(parametersJsonString,
                      Encoding.UTF8,
@@ -125,7 +154,7 @@ namespace NetTripoAI.TripoAI
 
         public async Task<string> RequestAnimateModel(string task_id)
         {
-            if (string.IsNullOrEmpty(API_KEY))
+            if (string.IsNullOrEmpty(api_key))
             {
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
             }
@@ -139,7 +168,7 @@ namespace NetTripoAI.TripoAI
             string animateTaskId = string.Empty;
             using (HttpClient client = new HttpClient())
             {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", API_KEY);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
                 string uri = "https://api.tripo3d.ai/v2/openapi/task";
                 StringContent jsonContent = new StringContent(parametersJsonString,
                      Encoding.UTF8,
