@@ -72,6 +72,11 @@ namespace NetTripoAI.Components
         private Point initPosition;
         private Point initOrientation;
 
+        private Vector3 positionVelocity;
+        private Vector3 rotationVelocity;
+        private float positionSmooth;
+        private float rotationSmooth;
+
         /// <summary>
         /// The Transform component of the entity to spin (own entity by default).
         /// </summary>
@@ -90,15 +95,17 @@ namespace NetTripoAI.Components
         [BindService]
         protected GraphicsPresenter graphicsPresenter;
 
+        private Vector3 targetPosition;
+
         /// <summary>
         /// Gets or sets the move speed of the camera.
         /// </summary>
-        public float MoveSpeed { get; set; }
+        private float MoveSpeed;
 
         /// <summary>
         /// Gets or sets the rotation speed of the camera.
         /// </summary>
-        public float RotationSpeed { get; set; }
+        private float RotationSpeed;
 
         /// <summary>
         /// Gets or sets the touch sensibility.
@@ -106,7 +113,7 @@ namespace NetTripoAI.Components
         /// <remarks>
         /// 0.5 is for stop, 1 is for raw delta, 2 is twice delta.
         /// </remarks>
-        public float TouchSensibility { get; set; }
+        private float TouchSensibility;
 
         /// <summary>
         /// Gets or sets the Mouse sensibility.
@@ -114,12 +121,12 @@ namespace NetTripoAI.Components
         /// <remarks>
         /// 0.5 is for stop, 1 is for raw delta, 2 is twice delta.
         /// </remarks>
-        public float MouseSensibility { get; set; }
+        private float MouseSensibility;
 
         /// <summary>
         /// Gets or sets the maximum pitch angle.
         /// </summary>
-        public float MaxPitch { get; set; }
+        private float MaxPitch;
 
         /// <summary>
         /// Gets or sets the Move/Orientation screen ratio.
@@ -127,21 +134,30 @@ namespace NetTripoAI.Components
         /// <remarks>
         /// 0.5f sets the same area to move and orientation actions. 0.1f sets the 10% of the screen to move action and 90% to orientation area.
         /// </remarks>
-        public float TouchMoveAndOrientationRatio { get; set; }
+        private float TouchMoveAndOrientationRatio;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FreeCamera3D"/> class.
         /// </summary>
         public CameraBehavior()
         {
-            this.MoveSpeed = 5.0f;
+            this.MoveSpeed = 0.7f;
             this.RotationSpeed = 5.0f;
             this.TouchSensibility = 1.0f;
             this.MouseSensibility = 0.03f;
             this.TouchMoveAndOrientationRatio = 0.5f;
             this.MaxPitch = MathHelper.PiOver2 * 0.95f;
+            this.positionSmooth = 0.3f;
+            this.rotationSmooth = 0.02f;
 
             this.moveStruct.Clear();
+        }
+
+        protected override void OnActivated()
+        {
+            base.OnActivated();
+
+            this.targetPosition = this.transform.LocalPosition;
         }
 
         /// <inheritdoc/>
@@ -165,9 +181,9 @@ namespace NetTripoAI.Components
             var elapsedAmount = maxCurrentSpeed * amount;
 
             // Manual in-line: position += speed * forward;
-            displacement.X = displacement.X + (elapsedAmount * director.X);
-            displacement.Y = displacement.Y + (elapsedAmount * director.Y);
-            displacement.Z = displacement.Z + (elapsedAmount * director.Z);
+            displacement.X += (elapsedAmount * director.X);
+            displacement.Y += (elapsedAmount * director.Y);
+            displacement.Z += (elapsedAmount * director.Z);
         }
 
         /// <summary>
@@ -178,47 +194,53 @@ namespace NetTripoAI.Components
         {
             Vector3 displacement = Vector3.Zero;
             Matrix4x4 localTransform = this.transform.LocalTransform;
-
-            var elapsedMaxSpeed = elapsed * this.MoveSpeed;
-
+            
+            var currentPosition = this.transform.LocalPosition;
             if (this.moveStruct.moveForward != 0.0f)
             {
-                this.Displacement(localTransform.Forward, elapsedMaxSpeed, this.moveStruct.moveForward, ref displacement);
+                this.Displacement(localTransform.Forward, this.MoveSpeed, this.moveStruct.moveForward, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
             else if (this.moveStruct.moveBackward != 0.0f)
             {
-                this.Displacement(localTransform.Backward, elapsedMaxSpeed, this.moveStruct.moveBackward, ref displacement);
+                this.Displacement(localTransform.Backward, this.MoveSpeed, this.moveStruct.moveBackward, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
 
             if (this.moveStruct.moveLeft != 0.0f)
             {
-                this.Displacement(localTransform.Left, elapsedMaxSpeed, this.moveStruct.moveLeft, ref displacement);
+                this.Displacement(localTransform.Left, this.MoveSpeed, this.moveStruct.moveLeft, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
             else if (this.moveStruct.moveRight != 0.0f)
             {
-                this.Displacement(localTransform.Right, elapsedMaxSpeed, this.moveStruct.moveRight, ref displacement);
+                this.Displacement(localTransform.Right, this.MoveSpeed, this.moveStruct.moveRight, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
 
             if (this.moveStruct.moveUp != 0.0f)
             {
-                this.Displacement(localTransform.Up, elapsedMaxSpeed, this.moveStruct.moveUp, ref displacement);
+                this.Displacement(localTransform.Up, this.MoveSpeed, this.moveStruct.moveUp, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
             else if (this.moveStruct.moveDown != 0.0f)
             {
-                this.Displacement(localTransform.Down, elapsedMaxSpeed, this.moveStruct.moveDown, ref displacement);
+                this.Displacement(localTransform.Down, this.MoveSpeed, this.moveStruct.moveDown, ref displacement);
+                this.targetPosition = currentPosition + displacement;
             }
 
-            // Manual in-line: camera.Position = position;
-            this.transform.LocalPosition += displacement;
+            // Manual in-line: camera.Position = position;           
+            this.transform.LocalPosition = Vector3.SmoothDamp(currentPosition, this.targetPosition, ref this.positionVelocity, this.positionSmooth, elapsed);            
 
             // Rotation:
-            var rotation = this.transform.LocalRotation;
-            rotation.Y += this.moveStruct.yaw * this.RotationSpeed * (1 / 60f);
-            rotation.X += this.moveStruct.pitch * this.RotationSpeed * (1 / 60f);
+            var currentRotation = this.transform.LocalRotation;
+            Vector3 targetRotation = Vector3.Zero;
+            targetRotation.X = currentRotation.X + (this.moveStruct.pitch * this.RotationSpeed * (1 / 60f));
+            targetRotation.Y = currentRotation.Y + (this.moveStruct.yaw * this.RotationSpeed * (1 / 60f));
 
             // Limit Pitch Angle
-            rotation.X = MathHelper.Clamp(rotation.X, -this.MaxPitch, this.MaxPitch);
-            this.transform.LocalRotation = rotation;
+            targetRotation.X = MathHelper.Clamp(targetRotation.X, -this.MaxPitch, this.MaxPitch);
+            this.transform.LocalRotation = Vector3.SmoothDamp(currentRotation, targetRotation, ref this.rotationVelocity, this.rotationSmooth, elapsed);
         }
 
         /// <summary>
