@@ -60,8 +60,8 @@ Items:
         TAU: 1.10000002
         TagFilter: null
         UsePhysicalParameters: false
-      - !NetTripoAI.Components.CameraBehavior,NetTripoAI
-        Id: 4184b70a-fa04-4dc9-9571-d0b8ee9b30f5
+      - !DonatelloAI.Components.CameraBehavior,DonatelloAI
+        Id: afe2492e-151d-467e-b0ba-d5ca0bfc6a3e
         IsEnabled: true
         UpdateOrder: 0.5
     Children: []
@@ -147,7 +147,7 @@ Items:
         Id: bb44cd62-4d92-418a-8a42-bbc2ed2b6f07
         AsignedTo: Default
         IsEnabled: true
-        Material: a932b266-a149-4ccf-83c6-d69937ca5015
+        Material: 70358caf-74a2-4c86-9ef8-260a72c4731f
         UseCopy: false
       - !Evergine.Components.Graphics3D.SphereMesh,Evergine.Components
         Id: 3ef37285-f016-4173-bbf0-278ec1624224
