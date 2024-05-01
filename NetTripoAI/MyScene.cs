@@ -2,7 +2,10 @@ using Evergine.Framework;
 using NetTripoAI.Components;
 using NetTripoAI.ImGui;
 using NetTripoAI.SceneManagers;
+using NetTripoAI.TripoAI;
 using NetTripoAI.UI;
+using System;
+using System.IO;
 
 namespace NetTripoAI
 {
@@ -22,8 +25,15 @@ namespace NetTripoAI
             
         }
 
-        protected override void CreateScene()
+        protected async override void CreateScene()
         {
+            var tripoAI = Application.Current.Container.Resolve<TripoAIService>();
+
+            var image = File.ReadAllBytes("spiderman.png");
+            string base64Image = Convert.ToBase64String(image);
+
+            await tripoAI.RequestImageToDraftModel(base64Image, "png");
+
             Entity ui = new Entity()
                 .AddComponent(new UIBehavior());
             this.Managers.EntityManager.Add(ui);            
