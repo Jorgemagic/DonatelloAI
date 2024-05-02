@@ -8,7 +8,7 @@ using System;
 using System.Diagnostics;
 
 namespace DonatelloAI.Windows
-{
+{    
     class Program
     {
         static uint width = 1280;
@@ -16,6 +16,7 @@ namespace DonatelloAI.Windows
         static bool Windowed = true;
         static bool VSync = true;
 
+        [System.STAThread]
         static void Main(string[] args)
         {
             // Commandline parser

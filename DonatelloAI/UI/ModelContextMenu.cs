@@ -60,7 +60,7 @@ namespace DonatelloAI.UI
                         this.showContextMenu = false;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Required API_KEY
                 }

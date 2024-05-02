@@ -7,6 +7,7 @@ using Evergine.Mathematics;
 using Evergine.UI;
 using System;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DonatelloAI.UI
 {
@@ -30,7 +31,7 @@ namespace DonatelloAI.UI
         {
             this.imGuiManager = manager;
             this.modelCollectionManager = modelCollectionManager;
-            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
+            this.tripoAIService = Evergine.Framework.Application.Current.Container.Resolve<TripoAIService>();
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -43,10 +44,20 @@ namespace DonatelloAI.UI
                 ImguiNative.igBegin("Image to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
-                if (ImguiNative.igButton("Select input image (jpg/jpeg, png, webp)", new Vector2(windowSize.X - buttonSize.X - 18, 19)))
+                if (ImguiNative.igButton("Choose input image (jpg/jpeg, png)", new Vector2(windowSize.X - buttonSize.X - 18, 19)))
                 {
-                    this.imageFilePath = "spiderman.png";
-                    this.LoadPreviewImage();
+                    using (OpenFileDialog openFileDialog = new OpenFileDialog())
+                    {
+                        openFileDialog.Filter = "Images files (*.png;*.jpg)|*.png;*.jpg|All files (*.*)|*.*";
+                        openFileDialog.RestoreDirectory = true;
+
+                        if (openFileDialog.ShowDialog() == DialogResult.OK)
+                        {
+
+                            this.imageFilePath = openFileDialog.FileName;
+                            this.LoadPreviewImage();
+                        }
+                    }
                 }
                 ImguiNative.igSameLine(0, 4);
                 if (ImguiNative.igButton("Create", buttonSize))
@@ -55,12 +66,12 @@ namespace DonatelloAI.UI
                 }
 
                 ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(windowSize.X - 14, buttonSize.Y), this.msg);
-                //if (this.image != IntPtr.Zero)
+                if (this.preview != IntPtr.Zero)
                 {
-                    ImguiNative.igImageButton(this.preview, Vector2.One * 315, Vector2.Zero, Vector2.One,0, Vector4.Zero, Vector4.One);                    
+                    ImguiNative.igImageButton(this.preview, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One);
                 }
                 ImguiNative.igSameLine(0, 6);
-                //if (this.preview != IntPtr.Zero)
+                if (this.image != IntPtr.Zero)
                 {
                     if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                     {
@@ -97,7 +108,7 @@ namespace DonatelloAI.UI
                     this.progress = 0;
 
                     ImageData imageData = new ImageData(this.imageFilePath);
-                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageData.Base64String, imageData.Extension);
+                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageData.Base64String, imageData.Extension);                    
 
                     // Waiting to task completed
                     string status = string.Empty;
@@ -122,7 +133,7 @@ namespace DonatelloAI.UI
                         this.msg = $"Download image preview ...";
 
                         var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
-                        this.preview = this.imGuiManager.CreateImGuiBinding(textureImage);
+                        this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
 
                         this.msg = $"Done!";
                     }

@@ -124,13 +124,14 @@ namespace DonatelloAI.SceneManagers
 
             string filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{extension}");
 
-            int index = 1;            
+            int index = 0;            
             while (File.Exists(filePath))
             {
-                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{index++}{extension}");
+                index++;
+                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{index}{extension}");
             }
 
-            return (filePath, fileName);
+            return (filePath, $"{fileName}{index}");
         }
 
         private async Task<Evergine.Framework.Graphics.Model> DownloadModelFromURL(string url, string filePath)
@@ -174,6 +175,12 @@ namespace DonatelloAI.SceneManagers
 
         private async Task DownloadFileTaskAsync(HttpClient client, Uri uri, string filePath)
         {
+            var directory = Path.GetDirectoryName(filePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             using (var s = await client.GetStreamAsync(uri))
             {
                 using (var fs = new FileStream(filePath, FileMode.CreateNew))

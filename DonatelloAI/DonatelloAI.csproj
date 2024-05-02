@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<GenerateEvergineContent>True</GenerateEvergineContent>
 		<GenerateEvergineAssets>False</GenerateEvergineAssets>
 		<GenerateEvergineScenesCode>True</GenerateEvergineScenesCode>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<UseWindowsForms>True</UseWindowsForms>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Evergine.Common" Version="2023.9.28.1837" />

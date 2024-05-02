@@ -11,7 +11,7 @@ namespace DonatelloAI.UI
         public ImageData(string filePath)
         {
             this.FilePath = filePath;
-            this.Extension = Path.GetExtension(this.FilePath);
+            this.Extension = Path.GetExtension(this.FilePath).Substring(1);
             var data = File.ReadAllBytes(filePath);
             this.Base64String = System.Convert.ToBase64String(data);
         }
