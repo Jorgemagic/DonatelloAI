@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DonatelloAI.UI
 {
-    public class CreatePanel
+    public class TextToModelPanel
     {
         private TripoAIService tripoAIService;
 
@@ -27,7 +27,7 @@ namespace DonatelloAI.UI
         private bool isBusy;
         private TripoResponse tripoResponse;
 
-        public CreatePanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
+        public TextToModelPanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
         {
             this.imGuiManager = manager;
             this.modelCollectionManager = modelCollectionManager;
@@ -40,7 +40,7 @@ namespace DonatelloAI.UI
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
                 ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.None);
-                ImguiNative.igBegin("Create Panel", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
+                ImguiNative.igBegin("Text to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
                 fixed (byte* buff = textBuffer)
@@ -135,7 +135,7 @@ namespace DonatelloAI.UI
                         this.msg = $"{status}";
                     }
                 }
-                catch (Exception e) { }
+                catch (Exception) { }
                 finally
                 {
                     this.isBusy = false;

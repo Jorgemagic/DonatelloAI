@@ -14,10 +14,12 @@ namespace DonatelloAI.UI
         private bool showSettings;
         private byte[] textBuffer = new byte[256];
         private TripoAIService tripoAIService;
+        private UIBehavior uiBehavior;
 
-        public MenuBar()
+        public MenuBar(UIBehavior uiBehavior)
         {
             this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
+            this.uiBehavior = uiBehavior;
         }
 
         public void Show(ref ImGuiIO* io)
@@ -35,6 +37,26 @@ namespace DonatelloAI.UI
                     if (ImguiNative.igMenuItem_Bool("About", null, false, true))
                     {
                         this.showAbout = true;
+                    }
+
+                    ImguiNative.igEndMenu();
+                }
+
+                if (ImguiNative.igBeginMenu("Views", true))
+                {
+                    if (ImguiNative.igMenuItem_Bool("Text to Model", null, false, true))
+                    {
+                        this.uiBehavior.ShowTextToModelPanel = true;
+                    }
+
+                    if (ImguiNative.igMenuItem_Bool("Image to Model", null, false, true))
+                    {
+                        this.uiBehavior.ShowImageToModelPanel = true;
+                    }
+
+                    if (ImguiNative.igMenuItem_Bool("Task list", null, false, true))
+                    {
+                        this.uiBehavior.ShowTaskListPanel = true;
                     }
 
                     ImguiNative.igEndMenu();
@@ -70,7 +92,7 @@ namespace DonatelloAI.UI
                 ImguiNative.igSpacing();
                 ImguiNative.igSpacing();
                 ImguiNative.igSpacing();
-                if (ImguiNative.igButton("Twitter: @jorge_magic", new Vector2(200,20)))
+                if (ImguiNative.igButton("Twitter: @jorge_magic", new Vector2(200, 20)))
                 {
                     Process.Start("explorer.exe", "https://twitter.com/jorge_magic");
                 }

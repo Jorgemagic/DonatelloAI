@@ -26,7 +26,8 @@ namespace DonatelloAI.UI
         [BindSceneManager]
         private TaskManager taskManager = null;
 
-        private CreatePanel createPanel;
+        private TextToModelPanel textToModelPanel;
+        private ImageToModelPanel imageToModelPanel;
         private LoadingPanel loadingPanel;
         private ModelContextMenu modelContextMenu;
         private TaskListPanel taskListPanel;
@@ -36,11 +37,30 @@ namespace DonatelloAI.UI
         {
             base.OnActivated();
 
-            this.createPanel = new CreatePanel(imguiManager, modelCollectionManager);
+            this.textToModelPanel = new TextToModelPanel(imguiManager, modelCollectionManager);
+            this.imageToModelPanel = new ImageToModelPanel(imguiManager, modelCollectionManager);
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
             this.modelContextMenu = new ModelContextMenu(taskManager);
             this.taskListPanel = new TaskListPanel(taskManager);
-            this.menuBar = new MenuBar();
+            this.menuBar = new MenuBar(this);
+        }
+
+        public bool ShowTextToModelPanel
+        {
+            get => this.textToModelPanel.OpenWindow;
+            set => this.textToModelPanel.OpenWindow = value;
+        }
+
+        public bool ShowImageToModelPanel
+        {
+            get => this.imageToModelPanel.OpenWindow;
+            set => imageToModelPanel.OpenWindow = value;
+        }
+
+        public bool ShowTaskListPanel
+        {
+            get => this.taskListPanel.OpenWindow;
+            set => taskListPanel.OpenWindow = value;
         }
 
         protected override void Update(TimeSpan gameTime)
@@ -69,7 +89,8 @@ namespace DonatelloAI.UI
             camera.Transform.LocalPosition = *t;
 
             // Panels            
-            this.createPanel.Show(ref io);
+            this.textToModelPanel.Show(ref io);
+            this.imageToModelPanel.Show(ref io);
             this.loadingPanel.Show(ref io);
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
@@ -79,7 +100,7 @@ namespace DonatelloAI.UI
             KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
             if (keyboardDispatcher?.ReadKeyState(Keys.Space) == ButtonState.Pressing)
             {
-                this.createPanel.OpenWindow = true;
+                this.textToModelPanel.OpenWindow = true;
             }
             if (keyboardDispatcher?.ReadKeyState(Keys.T) == ButtonState.Pressing)
             {
