@@ -24,6 +24,7 @@ namespace DonatelloAI.UI
         private string msg = string.Empty;
         private IntPtr image;
         private IntPtr preview;
+        private float minX, minY, maxX, maxY;
 
         public bool OpenWindow = false;
 
@@ -67,8 +68,8 @@ namespace DonatelloAI.UI
 
                 ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(windowSize.X - 14, buttonSize.Y), this.msg);
                 if (this.preview != IntPtr.Zero)
-                {
-                    ImguiNative.igImageButton(this.preview, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One);
+                {                    
+                    ImguiNative.igImageButton(this.preview, Vector2.One * 315, new Vector2(minX,minY), new Vector2(maxX, maxY), 0, Vector4.Zero, Vector4.One);
                 }
                 ImguiNative.igSameLine(0, 6);
                 if (this.image != IntPtr.Zero)
@@ -89,6 +90,25 @@ namespace DonatelloAI.UI
             Task.Run(async () =>
             {
                 var textureImage = await ImguiHelper.LoadTextureFromFile(this.imageFilePath);
+                var width = textureImage.Description.Width;
+                var height = textureImage.Description.Height;
+                this.minX = this.minY = 0;
+                this.maxX = this.maxY = 1;
+                float square = 315.0f;
+                if (width > height)
+                {
+                    var offset = (square - (height * (square / width))) / square;
+                    var offsetOverTwo = offset / 2.0f;
+                    this.minY = -offsetOverTwo;
+                    this.maxY = 1.0f + offsetOverTwo;
+                }
+                else
+                {
+                    var offset = (square - (width * (square / height))) / square;
+                    var offsetOverTwo = offset / 2.0f;
+                    this.minX = -offsetOverTwo;
+                    this.maxX = 1.0f + offsetOverTwo;
+                }
                 this.preview = this.imGuiManager.CreateImGuiBinding(textureImage);
             });
         }

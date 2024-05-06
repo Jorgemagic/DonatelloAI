@@ -13,9 +13,7 @@ using System;
 namespace DonatelloAI.UI
 {
     public unsafe class UIBehavior : Behavior
-    {
-        [BindService]
-        protected GraphicsPresenter graphicsPresenter = null;
+    {        
 
         [BindSceneManager]
         private CustomImGuiManager imguiManager = null;
@@ -95,17 +93,6 @@ namespace DonatelloAI.UI
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
             this.menuBar.Show(ref io);
-
-            // Input
-            KeyboardDispatcher keyboardDispatcher = this.graphicsPresenter.FocusedDisplay?.KeyboardDispatcher;
-            if (keyboardDispatcher?.ReadKeyState(Keys.Space) == ButtonState.Pressing)
-            {
-                this.textToModelPanel.OpenWindow = true;
-            }
-            if (keyboardDispatcher?.ReadKeyState(Keys.T) == ButtonState.Pressing)
-            {
-                this.taskListPanel.OpenWindow = true;
-            }
         }
     }
 }

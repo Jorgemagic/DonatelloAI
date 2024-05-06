@@ -348,9 +348,9 @@ namespace DonatelloAI.ImGui
             SamplerStateDescription samplerDescription = new SamplerStateDescription()
             {
                 Filter = TextureFilter.MinLinear_MagLinear_MipLinear,
-                AddressU = TextureAddressMode.Wrap,
-                AddressV = TextureAddressMode.Wrap,
-                AddressW = TextureAddressMode.Wrap,
+                AddressU = TextureAddressMode.Border,
+                AddressV = TextureAddressMode.Border,
+                AddressW = TextureAddressMode.Border,
                 MipLODBias = 0f,
                 MaxAnisotropy = 1,
                 ComparisonFunc = ComparisonFunction.Never,
