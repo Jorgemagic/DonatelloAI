@@ -1,12 +1,16 @@
 # Donatello AI
 
-[TripoAI](https://www.tripo3d.ai) offers a cutting-edge [API-Rest](https://platform.tripo3d.ai/docs/introduction) that seamlessly integrates AI-generated models into your applications or tools. With its initial version released just last March, we're witnessing just the beginning of its potential.
+"Imagine being able to type anything and generate a 3D model within seconds."
 
-I've developed a desktop tool leveraging TripoAI's service alongside [Evergine](https://evergine.com/) to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials. It's a game-changer for those in need of free 3D models to prototype their scene creations.
+_DonatelloAI_ name not only pays homage to the famous Italian sculptor Donatello but also reflects its integration with artificial intelligence, symbolizing a fusion of traditional craftsmanship and modern technology
+
+I've developed a desktop tool leveraging __[TripoAI's service](https://platform.tripo3d.ai/docs/introduction)__ alongside __[Evergine](https://evergine.com/)__ to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials in _GLB_ format.
 
 [![Video1](Screenshots/TripoAI-screenshot.png)](https://youtu.be/4h0niYYxv08)
 
 [![Video2](Screenshots/refine_animate_screenshot.png)](https://youtu.be/tMIblPzj7Rk)
+
+[![Video3](Screenshots/image-to-model.png)](https://www.youtube.com/watch?v=eK2TKLc32ZY)
 
 ## How to use
 
