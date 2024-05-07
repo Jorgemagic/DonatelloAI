@@ -69,7 +69,7 @@ namespace DonatelloAI.SceneManagers
             {
                 this.IsBusyChanged?.Invoke(this, true);
 
-                string url = tripoResponse.data.result.model.url;
+                string url = tripoResponse.data.output.model;
                 var result = this.GetFilePathFromUrl(url, entityTag);
                 var model = await this.DownloadModelFromURL(url, result.filePath);
                 

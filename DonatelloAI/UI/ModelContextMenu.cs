@@ -59,6 +59,12 @@ namespace DonatelloAI.UI
                         this.taskManager.RequestAnimateModel();
                         this.showContextMenu = false;
                     }
+
+                    if (ImguiNative.igButton("Stylization", buttonSize))
+                    {
+                        this.taskManager.RequestStylization();
+                        this.showContextMenu = false;
+                    }
                 }
                 catch (Exception)
                 {
