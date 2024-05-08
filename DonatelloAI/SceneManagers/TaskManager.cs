@@ -119,7 +119,7 @@ namespace DonatelloAI.SceneManagers
             });
         }
 
-        public void RequestStylization()
+        public void RequestStylization(TripoAIService.Styles style)
         {
             Task.Run(async () =>
             {
@@ -127,12 +127,28 @@ namespace DonatelloAI.SceneManagers
                 string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();                
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
+                TaskStatus.TaskType taskType = default;
+                switch (style)
+                {
+                    case TripoAIService.Styles.Voxel:
+                        taskType = TaskStatus.TaskType.Voxel;
+                        break;
+                    case TripoAIService.Styles.Voronoi:
+                        taskType = TaskStatus.TaskType.Voronoi;
+                        break;
+                    case TripoAIService.Styles.Lego:
+                        taskType = TaskStatus.TaskType.Lego;
+                        break;
+                    default:
+                        break;
+                }
+
                 if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus taskStatus = new TaskStatus()
                     {
                         TaskId = task_id,
-                        Type = TaskStatus.TaskType.Refine,
+                        Type = taskType,
                         ModelName = entityTag,
                         progress = 0,
                         msg = "starting",
@@ -140,7 +156,7 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request refine Model
-                    var stylizationTaskId = await this.tripoAIService.RequestStylization(task_id, TripoAIService.Styles.Lego);
+                    var stylizationTaskId = await this.tripoAIService.RequestStylization(task_id, style);
                     
                     TripoResponse tripoResponse = null;
                     // Waiting to task completed                

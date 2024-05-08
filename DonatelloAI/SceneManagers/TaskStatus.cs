@@ -6,6 +6,9 @@
         {
             Refine,
             Animate,
+            Lego,
+            Voxel,
+            Voronoi,
         }
 
         public string TaskId;

@@ -41,29 +41,44 @@ namespace DonatelloAI.UI
             if (this.showContextMenu)
             {
                 ImguiNative.igSetNextWindowPos(this.contextMenuPosition, ImGuiCond.None, Vector2.Zero);
-                ImguiNative.igSetNextWindowSize(new Vector2(96, 80), ImGuiCond.None);
+                ImguiNative.igSetNextWindowSize(new Vector2(120, 90), ImGuiCond.None);
                 ImguiNative.igBegin("Context Menu", this.imguiBars.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove);
 
                 try
                 {
                     ImguiNative.igText("Options");
-                    Vector2 buttonSize = new Vector2(80, 20);
-                    if (ImguiNative.igButton("Refine", buttonSize))
+                    ImguiNative.igSeparator();
+                    if (ImguiNative.igMenuItem_Bool("Refine", null, false, true))
                     {
                         this.taskManager.RequestRefineModel();
                         this.showContextMenu = false;
                     }
 
-                    if (ImguiNative.igButton("Animate", buttonSize))
+                    if (ImguiNative.igMenuItem_Bool("Animate", null, false, true))
                     {
                         this.taskManager.RequestAnimateModel();
                         this.showContextMenu = false;
                     }
 
-                    if (ImguiNative.igButton("Stylization", buttonSize))
+                    if (ImguiNative.igBeginMenu("Stylization", true))
                     {
-                        this.taskManager.RequestStylization();
-                        this.showContextMenu = false;
+                        if (ImguiNative.igMenuItem_Bool("Lego", null, false, true))
+                        {
+                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Lego);
+                            this.showContextMenu = false;
+                        }
+                        if (ImguiNative.igMenuItem_Bool("Voxel", null, false, true))
+                        {
+                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voxel);
+                            this.showContextMenu = false;
+                        }
+                        if (ImguiNative.igMenuItem_Bool("Voronoi", null, false, true))
+                        {
+                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voronoi);
+                            this.showContextMenu = false;
+                        }
+
+                        ImguiNative.igEndMenu();
                     }
                 }
                 catch (Exception)
@@ -72,7 +87,7 @@ namespace DonatelloAI.UI
                 }
 
                 ImguiNative.igEnd();
-            }            
-        }            
+            }
+        }
     }
 }
