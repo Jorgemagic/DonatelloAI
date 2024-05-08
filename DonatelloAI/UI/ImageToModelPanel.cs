@@ -40,12 +40,13 @@ namespace DonatelloAI.UI
             if (this.OpenWindow)
             {
                 var windowSize = new Vector2(650, 398);
-                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(windowSize, ImGuiCond.None);
+                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
+                ImguiNative.igSetNextWindowSize(windowSize, ImGuiCond.Appearing);
                 ImguiNative.igBegin("Image to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
-                if (ImguiNative.igButton("Choose input image (jpg/jpeg, png)", new Vector2(windowSize.X - buttonSize.X - 18, 19)))
+                ImguiNative.igPushStyleVar_Vec2(ImGuiStyleVar.ButtonTextAlign, new Vector2(0,0.5f));
+                if (ImguiNative.igButton("Select an input image (jpg/jpeg, png) ...", new Vector2(windowSize.X - buttonSize.X - 18, 19)))
                 {
                     using (OpenFileDialog openFileDialog = new OpenFileDialog())
                     {
@@ -60,6 +61,7 @@ namespace DonatelloAI.UI
                         }
                     }
                 }
+                ImguiNative.igPopStyleVar(1);
                 ImguiNative.igSameLine(0, 4);
                 if (ImguiNative.igButton("Create", buttonSize))
                 {

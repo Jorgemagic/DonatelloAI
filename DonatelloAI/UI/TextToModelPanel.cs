@@ -38,8 +38,8 @@ namespace DonatelloAI.UI
         {
             if (this.OpenWindow)
             {
-                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.None, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.None);
+                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
+                ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.Appearing);
                 ImguiNative.igBegin("Text to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);

@@ -179,7 +179,7 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
 
-                        this.modelCollectionManager.DownloadModel(tripoResponse, entityTag + "_lego");
+                        this.modelCollectionManager.DownloadModel(tripoResponse, entityTag + $"_{style}");
                     }
                 }
             });
