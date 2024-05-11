@@ -41,7 +41,7 @@ namespace DonatelloAI.UI
             if (this.showContextMenu)
             {
                 ImguiNative.igSetNextWindowPos(this.contextMenuPosition, ImGuiCond.None, Vector2.Zero);
-                ImguiNative.igSetNextWindowSize(new Vector2(120, 90), ImGuiCond.None);
+                ImguiNative.igSetNextWindowSize(new Vector2(125, 125), ImGuiCond.None);
                 ImguiNative.igBegin("Context Menu", this.imguiBars.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove);
 
                 try
@@ -60,26 +60,23 @@ namespace DonatelloAI.UI
                         this.showContextMenu = false;
                     }
 
-                    if (ImguiNative.igBeginMenu("Stylization", true))
-                    {
-                        if (ImguiNative.igMenuItem_Bool("Lego", null, false, true))
-                        {
-                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Lego);
-                            this.showContextMenu = false;
-                        }
-                        if (ImguiNative.igMenuItem_Bool("Voxel", null, false, true))
-                        {
-                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voxel);
-                            this.showContextMenu = false;
-                        }
-                        if (ImguiNative.igMenuItem_Bool("Voronoi", null, false, true))
-                        {
-                            this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voronoi);
-                            this.showContextMenu = false;
-                        }
+                    ImguiNative.igSeparator();
 
-                        ImguiNative.igEndMenu();
+                    if (ImguiNative.igMenuItem_Bool("Style - Lego", null, false, true))
+                    {
+                        this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Lego);
+                        this.showContextMenu = false;
                     }
+                    if (ImguiNative.igMenuItem_Bool("Style - Voxel", null, false, true))
+                    {
+                        this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voxel);
+                        this.showContextMenu = false;
+                    }
+                    if (ImguiNative.igMenuItem_Bool("Style - Voronoi", null, false, true))
+                    {
+                        this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voronoi);
+                        this.showContextMenu = false;
+                    }                                       
                 }
                 catch (Exception)
                 {
