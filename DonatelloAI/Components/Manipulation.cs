@@ -20,7 +20,7 @@ namespace DonatelloAI.Components
 
         [BindSceneManager]
         private ModelCollectionManager modelCollectionManager = null;
-        
+
         private Transform3D transform = null;
 
         private Matrix4x4 view;
@@ -28,6 +28,8 @@ namespace DonatelloAI.Components
         private Matrix4x4 world;
 
         private OPERATION operation;
+
+        public bool PickingEnabled { get; set; } = true;
 
         public Manipulation()
         {
@@ -63,28 +65,31 @@ namespace DonatelloAI.Components
             var mouseDispatcher = camera.Display?.MouseDispatcher;
             if (mouseDispatcher != null)
             {
-                if (mouseDispatcher.ReadButtonState(MouseButtons.Left) == ButtonState.Pressing ||
-                    mouseDispatcher.ReadButtonState(MouseButtons.Right) == ButtonState.Pressing)
+                if (this.PickingEnabled)
                 {
-                    var pos = mouseDispatcher.Position.ToVector2();
-
-                    camera.CalculateRay(ref pos, out var ray);
-
-                    Entity selectedEntity = null;
-                    var hitResult = Managers.PhysicManager3D.RayCast(ref ray, 100);
-                    if (hitResult.Succeeded)
+                    if (mouseDispatcher.ReadButtonState(MouseButtons.Left) == ButtonState.Pressing ||
+                        mouseDispatcher.ReadButtonState(MouseButtons.Right) == ButtonState.Pressing)
                     {
-                        selectedEntity = hitResult.PhysicBody.BodyComponent.Owner;
-                        transform = selectedEntity.FindComponent<Transform3D>();
-                        
+                        var pos = mouseDispatcher.Position.ToVector2();
+
+                        camera.CalculateRay(ref pos, out var ray);
+
+                        Entity selectedEntity = null;
+                        var hitResult = Managers.PhysicManager3D.RayCast(ref ray, 100);
+                        if (hitResult.Succeeded)
+                        {
+                            selectedEntity = hitResult.PhysicBody.BodyComponent.Owner;
+                            transform = selectedEntity.FindComponent<Transform3D>();
+
+                        }
+                        else
+                        {
+                            transform = null;
+                            selectedEntity = null;
+                        }
+                        this.modelCollectionManager.CurrentSelectedEntity = selectedEntity;
                     }
-                    else
-                    {
-                        transform = null;
-                        selectedEntity = null;
-                    }
-                    this.modelCollectionManager.CurrentSelectedEntity = selectedEntity;
-                }                
+                }
 
 
                 // Show Manipulator

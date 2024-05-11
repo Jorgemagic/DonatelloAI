@@ -127,26 +127,26 @@ namespace DonatelloAI.SceneManagers
             {
                 // Get task id
                 string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();                
-                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
-
-                TaskStatus.TaskType taskType = default;
-                switch (style)
-                {
-                    case TripoAIService.Styles.Voxel:
-                        taskType = TaskStatus.TaskType.Voxel;
-                        break;
-                    case TripoAIService.Styles.Voronoi:
-                        taskType = TaskStatus.TaskType.Voronoi;
-                        break;
-                    case TripoAIService.Styles.Lego:
-                        taskType = TaskStatus.TaskType.Lego;
-                        break;
-                    default:
-                        break;
-                }
+                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;                
 
                 if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
                 {
+                    TaskStatus.TaskType taskType = default;
+                    switch (style)
+                    {
+                        case TripoAIService.Styles.Voxel:
+                            taskType = TaskStatus.TaskType.Voxel;
+                            break;
+                        case TripoAIService.Styles.Voronoi:
+                            taskType = TaskStatus.TaskType.Voronoi;
+                            break;
+                        case TripoAIService.Styles.Lego:
+                            taskType = TaskStatus.TaskType.Lego;
+                            break;
+                        default:
+                            break;
+                    }
+
                     TaskStatus taskStatus = new TaskStatus()
                     {
                         TaskId = task_id,

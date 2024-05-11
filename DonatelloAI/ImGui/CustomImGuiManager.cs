@@ -49,6 +49,7 @@ namespace DonatelloAI.ImGui
 
         private Camera camera;
         private CameraBehavior cameraBehavior;
+        private Manipulation manipulation;
 
         /// <summary>
         ///  Gets or Sets a value indicating whether the Imguizmo extension is enabled.
@@ -76,6 +77,7 @@ namespace DonatelloAI.ImGui
                 {
                     this.focus = value;
                     this.cameraBehavior.IsEnabled = !this.focus;
+                    this.manipulation.PickingEnabled = !this.focus;
                 }
             }
         }
@@ -110,6 +112,7 @@ namespace DonatelloAI.ImGui
             base.OnActivated();
             this.camera = this.renderManager.ActiveCamera3D;
             this.cameraBehavior = this.camera.Owner.FindComponent<CameraBehavior>();
+            this.manipulation = this.Managers.EntityManager.FindFirstComponentOfType<Manipulation>();
         }
 
         /// <inheritdoc/>
