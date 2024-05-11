@@ -118,7 +118,7 @@ namespace DonatelloAI.UI
 
         private void RequestImageToDraftModel()
         {
-            if (this.isBusy) return;
+            if (this.isBusy || string.IsNullOrEmpty(this.imageFilePath)) return;
 
             Task.Run(async () =>
             {
@@ -130,7 +130,13 @@ namespace DonatelloAI.UI
                     this.progress = 0;
 
                     ImageData imageData = new ImageData(this.imageFilePath);
-                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageData.Base64String, imageData.Extension);                    
+                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageData.Base64String, imageData.Extension);
+
+                    if (string.IsNullOrEmpty(taskId))
+                    {
+                        this.isBusy = false;
+                        return;
+                    }
 
                     // Waiting to task completed
                     string status = string.Empty;

@@ -23,7 +23,7 @@ namespace DonatelloAI.UI
                 int windowsWidth = 600;
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X - 8, io->DisplaySize.Y - 8), ImGuiCond.Appearing, Vector2.One);
                 ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, 105), ImGuiCond.Appearing);
-                ImguiNative.igBegin("Task list", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
+                ImguiNative.igBegin("Task list", this.OpenWindow.Pointer(), ImGuiWindowFlags.None);
 
                 var tasks = this.taskManager.TaskCollection;
 

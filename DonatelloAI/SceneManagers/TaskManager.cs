@@ -40,6 +40,8 @@ namespace DonatelloAI.SceneManagers
                     // Request refine Model
                     var refineTaskId = await this.tripoAIService.RequestRefineModel(task_id);
 
+                    if (string.IsNullOrEmpty(refineTaskId)) return;
+
                     TripoResponse tripoResponse = null;
                     // Waiting to task completed                
                     string status = string.Empty;
@@ -143,7 +145,7 @@ namespace DonatelloAI.SceneManagers
                         break;
                 }
 
-                if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
+               // if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus taskStatus = new TaskStatus()
                     {
@@ -156,8 +158,10 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request refine Model
-                    var stylizationTaskId = await this.tripoAIService.RequestStylization(task_id, style);
-                    
+                    //var stylizationTaskId = await this.tripoAIService.RequestStylization(task_id, style);
+                    var stylizationTaskId = "836f51e9-83b3-4fb9-b574-f2245690a300";
+                    if (string.IsNullOrEmpty(stylizationTaskId)) return;
+
                     TripoResponse tripoResponse = null;
                     // Waiting to task completed                
                     string status = string.Empty;

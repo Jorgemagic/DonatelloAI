@@ -55,7 +55,7 @@ namespace DonatelloAI.ImGui
             Texture result = null;
             using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(stream))
             {
-                RawImageLoader.CopyImageToArrayPool(image, out _, out byte[] data);
+                RawImageLoader.CopyImageToArrayPool(image, false, out _, out byte[] data);
                 await EvergineForegroundTask.Run(() =>
                 {
                     TextureDescription desc = new TextureDescription()

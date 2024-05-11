@@ -25,6 +25,8 @@ using Buffer = Evergine.Common.Graphics.Buffer;
 using Material = Evergine.Framework.Graphics.Material;
 using Mesh = Evergine.Framework.Graphics.Mesh;
 using Texture = Evergine.Common.Graphics.Texture;
+using System.Diagnostics;
+using Evergine.Bindings.Draco;
 
 namespace DonatelloAI.Importers.GLB
 {
@@ -60,7 +62,12 @@ namespace DonatelloAI.Importers.GLB
         private Gltf glbModel;
         private byte[] binaryChunk;
         private BufferInfo[] bufferInfos;
-        private Func<Color, Texture, SamplerState, AlphaModeEnum, float, float, bool, Material> materialAssigner;
+
+        private Func<Color, Texture, SamplerState, AlphaModeEnum, float, float, bool, Material> materialAssigner = null;
+
+        // If the bufferView is compressed (Draco), we can cache the decoded data
+        // next time we find a primitive that references this bufferView, we can check if the buffer has been already decoded
+        private Dictionary<int, Draco.Mesh> decodedBufferViews = new Dictionary<int, Draco.Mesh>();
 
         private GLBRuntime()
         {
@@ -105,8 +112,6 @@ namespace DonatelloAI.Importers.GLB
         /// <returns>Model asset.</returns>
         public override async Task<Model> Read(Stream stream, Func<Color, Texture, SamplerState, AlphaModeEnum, float, float, bool, Material> materialAssigner = null)
         {
-            this.materialAssigner = materialAssigner;
-
             this.LoadStaticResources();
 
             var model = await this.ReadGLB(stream);
@@ -145,6 +150,12 @@ namespace DonatelloAI.Importers.GLB
                 this.bufferInfos[i].Dispose();
             }
 
+            foreach (var p in this.decodedBufferViews)
+            {
+                Draco.Release(p.Value);
+            }
+            this.decodedBufferViews.Clear();
+
             this.glbModel = null;
             this.materials.Clear();
             this.images.Clear();
@@ -179,6 +190,11 @@ namespace DonatelloAI.Importers.GLB
             {
                 this.assetsService.RegisterInstance<Material>(materialInfo.material);
                 materialCollection.Add((materialInfo.name, materialInfo.material.Id));
+            }
+
+            if (materialCollection.Count == 0)
+            {
+                materialCollection.Add(("default", DefaultResourcesIDs.DefaultMaterialID));
             }
 
             model = new Model()
@@ -332,6 +348,12 @@ namespace DonatelloAI.Importers.GLB
             return (nodeContent, nodeId);
         }
 
+        private IntPtr BufferView_GetPtr(glTFLoader.Schema.BufferView bufferView)
+        {
+            ref var bufferInfo = ref bufferInfos[bufferView.Buffer];
+            return bufferInfo.bufferPointer + bufferView.ByteOffset;
+        }
+
         private async Task<Mesh> ReadPrimitive(MeshPrimitive primitive)
         {
             // Create Vertex Buffers
@@ -339,60 +361,83 @@ namespace DonatelloAI.Importers.GLB
 
             List<VertexBuffer> vertexBuffersList = new List<VertexBuffer>();
 
-            var sortedAttributes = this.SortAttributes(attributes);
+            int dracoBufferViewId = -1;
+            Dictionary<string, int> dracoAttributes = new Dictionary<String, int>();
+            if (primitive.Extensions != null)
+            {
+                object dracoExtensionTmp;
+                bool hasDracoExtension = primitive.Extensions.TryGetValue("KHR_draco_mesh_compression", out dracoExtensionTmp);
+                if (hasDracoExtension)
+                {
+                    var dracoExtension = (JObject)dracoExtensionTmp;
+                    dracoBufferViewId = (int)dracoExtension["bufferView"];
+                    if (!decodedBufferViews.ContainsKey(dracoBufferViewId))
+                    {
+                        var bufferView = this.glbModel.BufferViews[dracoBufferViewId];
+                        var bufferInfo = this.bufferInfos[bufferView.Buffer];
+                        var ptr = bufferInfo.bufferPointer + bufferView.ByteOffset;
+                        var decompressedMesh = Draco.Decompress(ptr, (UIntPtr)bufferView.ByteLength);
+                        decodedBufferViews.Add(dracoBufferViewId, decompressedMesh);
+                    }
+
+                    dracoAttributes = dracoExtension["attributes"].ToObject<Dictionary<String, int>>();
+                }
+            }
+
+            var normalAttributes = attributes.Where(KV => !dracoAttributes.ContainsKey(KV.Key)).ToArray(); // the attributes which are not draco-compressed
+            var sortedAttributes = this.SortAttributes(normalAttributes);
 
             BoundingBox meshBounding = default;
             bool vertexColorEnabled = false;
+
+            // handle normal attributes (not draco-compressed)
             int lastBufferViewId = -1;
             LayoutDescription currentLayout = null;
             uint lastAttributeSizeInBytes = 0;
             for (int i = 0; i < sortedAttributes.Length; i++)
             {
                 var attributeName = sortedAttributes[i].name;
-
                 if (attributeName.Contains("COLOR"))
                 {
                     vertexColorEnabled = true;
                 }
 
                 var accessor = sortedAttributes[i].accessor;
-                int bufferViewId = accessor.BufferView.Value;
-                var bufferView = this.glbModel.BufferViews[bufferViewId];
 
                 ElementDescription elementDesc = this.GetElementFromAttribute(attributeName, accessor);
+                vertexColorEnabled |= elementDesc.Semantic == ElementSemanticType.Color;
+
+                int bufferViewId = accessor.BufferView.Value;
 
                 if (bufferViewId != lastBufferViewId ||
                     accessor.ByteOffset >= lastAttributeSizeInBytes)
                 {
                     lastBufferViewId = bufferViewId;
-                    IntPtr attributePointer = this.bufferInfos[bufferView.Buffer].bufferPointer + bufferView.ByteOffset + accessor.ByteOffset;
+
+                    var bufferView = this.glbModel.BufferViews[bufferViewId];
+                    IntPtr attributePointer = BufferView_GetPtr(bufferView) + accessor.ByteOffset;
+
                     int dataSize = this.SizeInBytes(accessor);
                     int strideInBytes = bufferView.ByteStride.HasValue ? bufferView.ByteStride.Value : dataSize;
 
                     uint attributeSizeInBytes = (uint)(strideInBytes * accessor.Count);
                     lastAttributeSizeInBytes = attributeSizeInBytes;
 
-                    Buffer buffer = null;
-                    await EvergineForegroundTask.Run(() =>
-                    {
-                        BufferDescription bufferDesc = new BufferDescription(
-                                                                            attributeSizeInBytes,
-                                                                            BufferFlags.ShaderResource | BufferFlags.VertexBuffer,
-                                                                            ResourceUsage.Default,
-                                                                            ResourceCpuAccess.None,
-                                                                            strideInBytes);
+                    var bufferDesc = new BufferDescription(
+                        attributeSizeInBytes,
+                        BufferFlags.ShaderResource | BufferFlags.VertexBuffer,
+                        ResourceUsage.Default,
+                        ResourceCpuAccess.None,
+                        strideInBytes);
 
-                        buffer = this.graphicsContext.Factory.CreateBuffer(attributePointer, ref bufferDesc);
-                    });
-                    
-                    currentLayout = new LayoutDescription()
-                                                  .Add(elementDesc);
+                    Buffer buffer = this.graphicsContext.Factory.CreateBuffer(attributePointer, ref bufferDesc);
+                    currentLayout = new LayoutDescription().Add(elementDesc);
+
                     vertexBuffersList.Add(new VertexBuffer(buffer, currentLayout));
                 }
                 else
-                {
                     currentLayout.Add(elementDesc);
-                }
+
 
                 // Create bounding box
                 if (elementDesc.Semantic == ElementSemanticType.Position && elementDesc.SemanticIndex == 0)
@@ -403,24 +448,85 @@ namespace DonatelloAI.Importers.GLB
                 }
             }
 
+            // handle attributes with draco compression
+            foreach (var p in dracoAttributes)
+            {
+                var attributeName = p.Key;
+                int attribUId = p.Value;
+                var accessor = this.glbModel.Accessors[primitive.Attributes[p.Key]];
+
+                ElementDescription elementDesc = this.GetElementFromAttribute(attributeName, accessor);
+                vertexColorEnabled |= elementDesc.Semantic == ElementSemanticType.Color;
+
+                var dracoMesh = decodedBufferViews[dracoBufferViewId];
+
+                var attribute = dracoMesh.GetAttributeByUniqueId((UInt32)attribUId);
+                var dracoData = Draco.GetData(dracoMesh, attribute);
+
+                uint attribSize = attribute.numComponents * Draco.GetSize(attribute.dataType);
+                var bufferDesc = new BufferDescription(
+                    attribSize * dracoMesh.numVertices,
+                    BufferFlags.ShaderResource | BufferFlags.VertexBuffer,
+                    ResourceUsage.Default,
+                    ResourceCpuAccess.None,
+                    (int)attribSize
+                );
+                Buffer buffer = this.graphicsContext.Factory.CreateBuffer(dracoData.data, ref bufferDesc);
+                var layout = new LayoutDescription().Add(elementDesc);
+                vertexBuffersList.Add(new VertexBuffer(buffer, layout));
+
+                // Create bounding box
+                if (elementDesc.Semantic == ElementSemanticType.Position && elementDesc.SemanticIndex == 0)
+                {
+                    Debug.Assert((Draco.DataType)attribute.dataType == Draco.DataType.DT_FLOAT32);
+                    var numComps = (int)attribute.numComponents;
+                    meshBounding = new BoundingBox(new Vector3(+1.0f / 0.0f), new Vector3(-1.0f / 0.0f));
+                    unsafe
+                    {
+                        var data = (float*)dracoData.data;
+                        for (uint vertI = 0; vertI < dracoMesh.numVertices; vertI++)
+                        {
+                            for (int compI = 0; compI < numComps; compI++)
+                            {
+                                meshBounding.Min[compI] = Math.Min(meshBounding.Min[compI], data[0]);
+                                meshBounding.Max[compI] = Math.Max(meshBounding.Max[compI], data[0]);
+                                data++;
+                            }
+                        }
+
+                    }
+                }
+
+                Draco.Release(dracoData);
+            }
+
             VertexBuffer[] meshVertexBuffers = vertexBuffersList.ToArray();
 
             // Create Index buffer
             var indicesAccessor = this.glbModel.Accessors[primitive.Indices.Value];
-            var indicesbufferView = this.glbModel.BufferViews[indicesAccessor.BufferView.Value];
-
-            IntPtr indicesPointer = this.bufferInfos[indicesbufferView.Buffer].bufferPointer + indicesbufferView.ByteOffset + indicesAccessor.ByteOffset;
-            var indexFormatInfo = this.GetIndexFormat(indicesAccessor.ComponentType);
-            uint indexSizeInBytes = (uint)(indexFormatInfo.size * indicesAccessor.Count);
-            int indexStrideInBytes = indicesbufferView.ByteStride.HasValue ? indicesbufferView.ByteStride.Value : 0;
-
-            IndexBuffer indexBuffer = null;
-            await EvergineForegroundTask.Run(() =>
+            IndexBuffer indexBuffer;
+            if (dracoBufferViewId == -1)
             {
+                var indicesbufferView = this.glbModel.BufferViews[indicesAccessor.BufferView.Value];
+
+                IntPtr indicesPointer = this.bufferInfos[indicesbufferView.Buffer].bufferPointer + indicesbufferView.ByteOffset + indicesAccessor.ByteOffset;
+                var indexFormatInfo = this.GetIndexFormat(indicesAccessor.ComponentType);
+                uint indexSizeInBytes = (uint)(indexFormatInfo.size * indicesAccessor.Count);
+                int indexStrideInBytes = indicesbufferView.ByteStride.HasValue ? indicesbufferView.ByteStride.Value : 0;
+
                 var iBufferDesc = new BufferDescription(indexSizeInBytes, BufferFlags.IndexBuffer, ResourceUsage.Default, ResourceCpuAccess.None, indexStrideInBytes);
                 Buffer iBuffer = this.graphicsContext.Factory.CreateBuffer(indicesPointer, ref iBufferDesc);
                 indexBuffer = new IndexBuffer(iBuffer, indexFormatInfo.format, flipWinding: true);
-            });
+            }
+            else // draco compression
+            {
+                var dracoMesh = decodedBufferViews[dracoBufferViewId];
+                var indices = dracoMesh.GetIndices();
+
+                var iBufferDesc = new BufferDescription(indices.dataSize, BufferFlags.IndexBuffer, ResourceUsage.Default, ResourceCpuAccess.None, 4);
+                Buffer iBuffer = this.graphicsContext.Factory.CreateBuffer(indices.data, ref iBufferDesc);
+                indexBuffer = new IndexBuffer(iBuffer, IndexFormat.UInt32, flipWinding: true);
+            }
 
             // Get Topology
             primitive.Mode.ToEverginePrimitive(out var primitiveTopology);
@@ -443,14 +549,14 @@ namespace DonatelloAI.Importers.GLB
 
         private (string name, Accessor accessor)[] SortAttributes(KeyValuePair<string, int>[] attributes)
         {
-            List<(string name, Accessor accessor)> sortedAttriburtes = new List<(string name, Accessor accessor)>(attributes.Length);
+            List<(string name, Accessor accessor)> sortedAttributes = new List<(string name, Accessor accessor)>(attributes.Length);
             for (int i = 0; i < attributes.Length; i++)
             {
                 var attribute = attributes[i];
-                sortedAttriburtes.Add((attribute.Key, this.glbModel.Accessors[attribute.Value]));
+                sortedAttributes.Add((attribute.Key, this.glbModel.Accessors[attribute.Value]));
             }
 
-            sortedAttriburtes.Sort((a, b) =>
+            sortedAttributes.Sort((a, b) =>
             {
                 var res = a.accessor.BufferView.Value.CompareTo(b.accessor.BufferView.Value);
                 if (res == 0)
@@ -461,10 +567,11 @@ namespace DonatelloAI.Importers.GLB
                 return res;
             });
 
-            return sortedAttriburtes.ToArray();
+            return sortedAttributes.ToArray();
         }
 
-        private ElementDescription GetElementFromAttribute(string name, Accessor accessor)
+        private ElementDescription GetElementFromAttribute(string name, Accessor accessor) { return GetElementFromAttribute(name, accessor.ComponentType, accessor.Type, accessor.Normalized); }
+        private ElementDescription GetElementFromAttribute(string name, Accessor.ComponentTypeEnum componentType, Accessor.TypeEnum type, bool normalized)
         {
             var semanticSplit = name.Split('_');
             var usageStr = semanticSplit[0];
@@ -509,89 +616,89 @@ namespace DonatelloAI.Importers.GLB
 
             // Element Format
             ElementFormat format;
-            switch (accessor.ComponentType)
+            switch (componentType)
             {
                 case Accessor.ComponentTypeEnum.BYTE:
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
-                            format = accessor.Normalized ? ElementFormat.ByteNormalized : ElementFormat.Byte;
+                            format = normalized ? ElementFormat.ByteNormalized : ElementFormat.Byte;
                             break;
                         case Accessor.TypeEnum.VEC2:
-                            format = accessor.Normalized ? ElementFormat.Byte2Normalized : ElementFormat.Byte2;
+                            format = normalized ? ElementFormat.Byte2Normalized : ElementFormat.Byte2;
                             break;
                         case Accessor.TypeEnum.VEC3:
-                            format = accessor.Normalized ? ElementFormat.Byte3Normalized : ElementFormat.Byte3;
+                            format = normalized ? ElementFormat.Byte3Normalized : ElementFormat.Byte3;
                             break;
                         case Accessor.TypeEnum.VEC4:
-                            format = accessor.Normalized ? ElementFormat.Byte4Normalized : ElementFormat.Byte4;
+                            format = normalized ? ElementFormat.Byte4Normalized : ElementFormat.Byte4;
                             break;
                     }
 
                     break;
                 case Accessor.ComponentTypeEnum.UNSIGNED_BYTE:
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
-                            format = accessor.Normalized ? ElementFormat.UByteNormalized : ElementFormat.UByte;
+                            format = normalized ? ElementFormat.UByteNormalized : ElementFormat.UByte;
                             break;
                         case Accessor.TypeEnum.VEC2:
-                            format = accessor.Normalized ? ElementFormat.UByte2Normalized : ElementFormat.UByte2;
+                            format = normalized ? ElementFormat.UByte2Normalized : ElementFormat.UByte2;
                             break;
                         case Accessor.TypeEnum.VEC3:
-                            format = accessor.Normalized ? ElementFormat.UByte3Normalized : ElementFormat.UByte3;
+                            format = normalized ? ElementFormat.UByte3Normalized : ElementFormat.UByte3;
                             break;
                         case Accessor.TypeEnum.VEC4:
-                            format = accessor.Normalized ? ElementFormat.UByte4Normalized : ElementFormat.UByte4;
+                            format = normalized ? ElementFormat.UByte4Normalized : ElementFormat.UByte4;
                             break;
                     }
 
                     break;
 
                 case Accessor.ComponentTypeEnum.SHORT:
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
-                            format = accessor.Normalized ? ElementFormat.ShortNormalized : ElementFormat.Short;
+                            format = normalized ? ElementFormat.ShortNormalized : ElementFormat.Short;
                             break;
                         case Accessor.TypeEnum.VEC2:
-                            format = accessor.Normalized ? ElementFormat.Short2Normalized : ElementFormat.Short2;
+                            format = normalized ? ElementFormat.Short2Normalized : ElementFormat.Short2;
                             break;
                         case Accessor.TypeEnum.VEC3:
-                            format = accessor.Normalized ? ElementFormat.Short3Normalized : ElementFormat.Short3;
+                            format = normalized ? ElementFormat.Short3Normalized : ElementFormat.Short3;
                             break;
                         case Accessor.TypeEnum.VEC4:
-                            format = accessor.Normalized ? ElementFormat.Short4Normalized : ElementFormat.Short4;
+                            format = normalized ? ElementFormat.Short4Normalized : ElementFormat.Short4;
                             break;
                     }
 
                     break;
 
                 case Accessor.ComponentTypeEnum.UNSIGNED_SHORT:
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
-                            format = accessor.Normalized ? ElementFormat.UShortNormalized : ElementFormat.UShort;
+                            format = normalized ? ElementFormat.UShortNormalized : ElementFormat.UShort;
                             break;
                         case Accessor.TypeEnum.VEC2:
-                            format = accessor.Normalized ? ElementFormat.UShort2Normalized : ElementFormat.UShort2;
+                            format = normalized ? ElementFormat.UShort2Normalized : ElementFormat.UShort2;
                             break;
                         case Accessor.TypeEnum.VEC3:
-                            format = accessor.Normalized ? ElementFormat.UShort3Normalized : ElementFormat.UShort3;
+                            format = normalized ? ElementFormat.UShort3Normalized : ElementFormat.UShort3;
                             break;
                         case Accessor.TypeEnum.VEC4:
-                            format = accessor.Normalized ? ElementFormat.UShort4Normalized : ElementFormat.UShort4;
+                            format = normalized ? ElementFormat.UShort4Normalized : ElementFormat.UShort4;
                             break;
                     }
 
                     break;
 
                 case Accessor.ComponentTypeEnum.UNSIGNED_INT:
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
@@ -613,7 +720,7 @@ namespace DonatelloAI.Importers.GLB
                 default:
                 case Accessor.ComponentTypeEnum.FLOAT:
 
-                    switch (accessor.Type)
+                    switch (type)
                     {
                         default:
                         case Accessor.TypeEnum.SCALAR:
@@ -694,7 +801,6 @@ namespace DonatelloAI.Importers.GLB
 
                         case Accessor.TypeEnum.VEC4:
                             return 16;
-
                         case Accessor.TypeEnum.MAT4:
                             return 64;
                     }
@@ -764,6 +870,7 @@ namespace DonatelloAI.Importers.GLB
                 }
 
                 Material material = null;
+
                 if (this.materialAssigner == null)
                 {
                     material = this.CreateEngineMaterial(baseColor.ToColor(), baseColorTexture, baseColorSampler, glbMaterial.AlphaMode, baseColor.A, glbMaterial.AlphaCutoff, vertexColorEnabled);
@@ -792,11 +899,12 @@ namespace DonatelloAI.Importers.GLB
                     layer = this.opaqueLayer;
                     break;
                 case AlphaModeEnum.BLEND:
-                    layer = alpha < 1.0f ? this.alphaLayer : this.opaqueLayer;
+                    layer = alpha < 1.0f ? this.alphaLayer : opaqueLayer;
                     break;
             }
 
             var effect = this.assetsService.Load<Effect>(DefaultResourcesIDs.StandardEffectID);
+
             StandardMaterial material = new StandardMaterial(effect)
             {
                 LightingEnabled = true,
@@ -879,10 +987,10 @@ namespace DonatelloAI.Importers.GLB
             Texture result = null;
 
             using (Stream fileStream = this.glbModel.OpenImageFile(imageId, this.GetExternalFileSolver))
-            {                
+            {
                 using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(fileStream))
                 {
-                    RawImageLoader.CopyImageToArrayPool(image, out _, out byte[] data);
+                    RawImageLoader.CopyImageToArrayPool(image, false, out _, out byte[] data);
                     await EvergineForegroundTask.Run(() =>
                     {
                         TextureDescription desc = new TextureDescription()

@@ -91,7 +91,7 @@ namespace DonatelloAI.UI
 
         private void RequestDraftModel(string prompt)
         {
-            if (this.isBusy) return;
+            if (this.isBusy || string.IsNullOrEmpty(prompt)) return;
 
             Task.Run(async () =>
             {
@@ -102,6 +102,12 @@ namespace DonatelloAI.UI
                     // Request draft model
                     this.progress = 0;
                     var taskId = await this.tripoAIService.RequestADraftModel(prompt);
+
+                    if (string.IsNullOrEmpty(taskId))
+                    {
+                        this.isBusy = false;
+                        return;
+                    }
 
                     // Waiting to task completed                
                     string status = string.Empty;
