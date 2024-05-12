@@ -8,14 +8,14 @@ using DonatelloAI.TripoAI;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace DonatelloAI.UI
 {
     public class TextToModelPanel
     {
         private TripoAIService tripoAIService;
-
-        public bool OpenWindow = true;
+        
         private byte[] textBuffer = new byte[256];
 
         private bool firstTime = true;
@@ -26,6 +26,21 @@ namespace DonatelloAI.UI
         private string msg = string.Empty;
         private bool isBusy;
         private TripoResponse tripoResponse;
+
+        private bool openWindow = true;
+
+        public bool OpenWindow
+        {
+            get => this.openWindow;
+            set
+            {
+                this.openWindow = value;
+                if (value)
+                {
+                    this.Reset();
+                }
+            }
+        }
 
         public TextToModelPanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
         {
@@ -40,7 +55,7 @@ namespace DonatelloAI.UI
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
                 ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.Appearing);
-                ImguiNative.igBegin("Text to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
+                ImguiNative.igBegin("Text to Model", this.openWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
                 fixed (byte* buff = textBuffer)
@@ -89,8 +104,24 @@ namespace DonatelloAI.UI
             }
         }
 
+        private void Reset()
+        {
+            this.progress = 0;
+            this.msg = string.Empty;
+            this.textBuffer = new byte[256];
+            this.firstTime = true;
+            this.ResetImage();
+        }
+
+        private void ResetImage()
+        {
+            this.image = ImguiHelper.SetNoPreviewImage(this.imGuiManager);
+        }
+
         private void RequestDraftModel(string prompt)
         {
+            this.ResetImage();
+
             if (this.isBusy || string.IsNullOrEmpty(prompt)) return;
 
             Task.Run(async () =>

@@ -1,17 +1,20 @@
-﻿using Evergine.Common.Graphics;
+﻿using DonatelloAI.Importers.Images;
+using Evergine.Common.Graphics;
 using Evergine.Framework;
+using Evergine.Framework.Services;
 using Evergine.Framework.Threading;
-using DonatelloAI.Importers.Images;
 using SixLabors.ImageSharp.PixelFormats;
+using System;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace DonatelloAI.ImGui
 {
     public static class ImguiHelper
     {
         private static GraphicsContext graphicsContext = null;
+        private static IntPtr previewPlaceholderPointer = IntPtr.Zero;        
 
         public static async Task<Texture> DownloadTextureFromUrl(string url)
         {
@@ -80,6 +83,18 @@ namespace DonatelloAI.ImGui
             }
 
             return result;
+        }
+
+        public static IntPtr SetNoPreviewImage(CustomImGuiManager imguiManager)
+        {
+            if (previewPlaceholderPointer == IntPtr.Zero)
+            {                
+                var assetsService = Evergine.Framework.Application.Current.Container.Resolve<AssetsService>();
+                var previewPlaceholder = assetsService.Load<Texture>(EvergineContent.Textures.ImageIcon_png);
+                previewPlaceholderPointer = imguiManager.CreateImGuiBinding(previewPlaceholder);               
+            }
+
+            return previewPlaceholderPointer;            
         }
     }
 }

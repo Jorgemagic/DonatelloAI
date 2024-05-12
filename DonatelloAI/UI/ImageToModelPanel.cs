@@ -2,7 +2,10 @@
 using DonatelloAI.SceneManagers;
 using DonatelloAI.TripoAI;
 using Evergine.Bindings.Imgui;
+using Evergine.Common.Graphics;
 using Evergine.Framework;
+using Evergine.Framework.Services;
+using Evergine.Framework.Threading;
 using Evergine.Mathematics;
 using Evergine.UI;
 using System;
@@ -25,8 +28,22 @@ namespace DonatelloAI.UI
         private IntPtr image;
         private IntPtr preview;
         private float minX, minY, maxX, maxY;
+        private IntPtr previewPlaceholderPointer;
 
-        public bool OpenWindow = false;
+        private bool openWindow = false;
+
+        public bool OpenWindow 
+        {
+            get => this.openWindow;
+            set
+            {
+                this.openWindow = value;
+                if (value)
+                {
+                    this.ResetImages(true);
+                }
+            }
+        }    
 
         public ImageToModelPanel(CustomImGuiManager manager, ModelCollectionManager modelCollectionManager)
         {
@@ -42,49 +59,76 @@ namespace DonatelloAI.UI
                 var windowSize = new Vector2(650, 398);
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
                 ImguiNative.igSetNextWindowSize(windowSize, ImGuiCond.Appearing);
-                ImguiNative.igBegin("Image to Model", this.OpenWindow.Pointer(), ImGuiWindowFlags.NoResize);
+                ImguiNative.igBegin("Image to Model", this.openWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
-                ImguiNative.igPushStyleVar_Vec2(ImGuiStyleVar.ButtonTextAlign, new Vector2(0,0.5f));
+                ImguiNative.igPushStyleVar_Vec2(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, 0.5f));
                 if (ImguiNative.igButton("Select an input image (jpg/jpeg, png) ...", new Vector2(windowSize.X - buttonSize.X - 18, 19)))
                 {
-                    using (OpenFileDialog openFileDialog = new OpenFileDialog())
-                    {
-                        openFileDialog.Filter = "Images files (*.png;*.jpg)|*.png;*.jpg|All files (*.*)|*.*";
-                        openFileDialog.RestoreDirectory = true;
-
-                        if (openFileDialog.ShowDialog() == DialogResult.OK)
-                        {
-
-                            this.imageFilePath = openFileDialog.FileName;
-                            this.LoadPreviewImage();
-                        }
-                    }
+                    SelectImagePath();
                 }
                 ImguiNative.igPopStyleVar(1);
                 ImguiNative.igSameLine(0, 4);
                 if (ImguiNative.igButton("Create", buttonSize))
                 {
+                    this.ResetImages();
                     this.RequestImageToDraftModel();
                 }
 
                 ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(windowSize.X - 14, buttonSize.Y), this.msg);
                 if (this.preview != IntPtr.Zero)
-                {                    
-                    ImguiNative.igImageButton(this.preview, Vector2.One * 315, new Vector2(minX,minY), new Vector2(maxX, maxY), 0, Vector4.Zero, Vector4.One);
+                {
+                    if (ImguiNative.igImageButton(this.preview, Vector2.One * 315, new Vector2(minX, minY), new Vector2(maxX, maxY), 0, Vector4.Zero, Vector4.One))
+                    {
+                        this.SelectImagePath();
+                    }
                 }
                 ImguiNative.igSameLine(0, 6);
                 if (this.image != IntPtr.Zero)
                 {
                     if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                     {
-                        this.modelCollectionManager.DownloadModel(this.tripoResponse);
-                        this.OpenWindow = false;
+                        if (this.tripoResponse != null)
+                        {
+                            this.modelCollectionManager.DownloadModel(this.tripoResponse);
+                            this.OpenWindow = false;
+                        }
                     }
                 }
 
                 ImguiNative.igEnd();
             }
+        }
+
+        private void SelectImagePath()
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Images files (*.png;*.jpg)|*.png;*.jpg|All files (*.*)|*.*";
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+
+                    this.imageFilePath = openFileDialog.FileName;
+                    this.LoadPreviewImage();
+                }
+            }
+        }
+
+        private void ResetImages(bool both = false)
+        {
+            Task.Run(() =>            
+            {
+                var noImage = ImguiHelper.SetNoPreviewImage(this.imGuiManager);
+                this.image = noImage;
+                if (both)
+                {
+                    this.preview = noImage;
+                    this.minX = this.minY = 0;
+                    this.maxX = this.maxY = 1;
+                }
+            });
         }
 
         private void LoadPreviewImage()
