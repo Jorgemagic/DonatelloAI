@@ -16,9 +16,9 @@ namespace DonatelloAI.UI
     {
         private TripoAIService tripoAIService;
         
-        private byte[] textBuffer = new byte[256];
+        private byte[] promptTextBuffer = new byte[256];
+        private byte[] negativeTextBuffer = new byte[256];
 
-        private bool firstTime = true;
         private IntPtr image;
         private CustomImGuiManager imGuiManager;
         private ModelCollectionManager modelCollectionManager;
@@ -54,32 +54,36 @@ namespace DonatelloAI.UI
             if (this.OpenWindow)
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(new Vector2(332, 400), ImGuiCond.Appearing);
+                ImguiNative.igSetNextWindowSize(new Vector2(333, 465), ImGuiCond.Appearing);
                 ImguiNative.igBegin("Text to Model", this.openWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
-                fixed (byte* buff = textBuffer)
-                {
-                    ImguiNative.igSetNextItemWidth(315 - buttonSize.X - 4);
-                    if (this.firstTime)
-                    {
-                        ImguiNative.igSetKeyboardFocusHere(0);
-                        this.firstTime = false;
-                    }
-
-                    ImguiNative.igInputTextWithHint(
-                        "##prompt",
-                        "Prompt text here",
-                        buff,
-                        (uint)textBuffer.Length,
-                        ImGuiInputTextFlags.None,
+                fixed (byte* promptBuffer = promptTextBuffer)
+                fixed (byte* negativeBuffer = negativeTextBuffer)
+                {                                        
+                    ImguiNative.igInputTextMultiline(                  
+                        "##prompt",                        
+                        promptBuffer,
+                        (uint)promptTextBuffer.Length,
+                        new Vector2(315, 40),
+                        ImGuiInputTextFlags.EnterReturnsTrue,
                         null,
                         null);
 
+                    ImguiNative.igInputTextMultiline(
+                        "##negative",
+                        negativeBuffer,
+                        (uint)negativeTextBuffer.Length,
+                        new Vector2(315, 40),
+                        ImGuiInputTextFlags.EnterReturnsTrue,
+                        null,
+                        null);
+
+                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315 - buttonSize.X - 4, buttonSize.Y), this.msg);
                     ImguiNative.igSameLine(0, 4);
                     if (ImguiNative.igButton("Create", buttonSize))
                     {
-                        string prompt = Encoding.UTF8.GetString(buff, textBuffer.Length);
+                        string prompt = Encoding.UTF8.GetString(promptBuffer, promptTextBuffer.Length);
                         var index = prompt.IndexOf('\0');
                         if (index >= 0)
                         {
@@ -88,8 +92,7 @@ namespace DonatelloAI.UI
 
                         this.RequestDraftModel(prompt);
                     }
-
-                    ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(315, buttonSize.Y), this.msg);
+                    
                     if (this.image != IntPtr.Zero)
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
@@ -108,8 +111,7 @@ namespace DonatelloAI.UI
         {
             this.progress = 0;
             this.msg = string.Empty;
-            this.textBuffer = new byte[256];
-            this.firstTime = true;
+            this.promptTextBuffer = new byte[256];
             this.ResetImage();
         }
 

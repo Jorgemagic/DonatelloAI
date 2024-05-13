@@ -50,7 +50,7 @@ namespace DonatelloAI.TripoAI
             File.WriteAllText(this.filePath, json);
         }
 
-        public async Task<string> RequestADraftModel(string promptText)
+        public async Task<string> RequestADraftModel(string promptText, string negativePrompt = default)
         {            
             if (string.IsNullOrEmpty(api_key))
             {
@@ -61,6 +61,10 @@ namespace DonatelloAI.TripoAI
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("type", "text_to_model");
             parameters.Add("prompt", promptText);
+            if (!string.IsNullOrEmpty(negativePrompt))
+            {
+                parameters.Add("negative_prompt", negativePrompt);
+            }
 
             string parametersJsonString = JsonConvert.SerializeObject(parameters);
 
@@ -184,7 +188,6 @@ namespace DonatelloAI.TripoAI
 
             return taskID;
         }
-
 
         public async Task<TripoResponse> GetTaskStatus(string task_id)
         {
