@@ -2,13 +2,10 @@
 using DonatelloAI.SceneManagers;
 using DonatelloAI.TripoAI;
 using Evergine.Bindings.Imgui;
-using Evergine.Common.Graphics;
-using Evergine.Framework;
-using Evergine.Framework.Services;
-using Evergine.Framework.Threading;
 using Evergine.Mathematics;
 using Evergine.UI;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -159,7 +156,6 @@ namespace DonatelloAI.UI
             });
         }
 
-
         private void RequestImageToDraftModel()
         {
             if (this.isBusy || string.IsNullOrEmpty(this.imageFilePath)) return;
@@ -173,8 +169,9 @@ namespace DonatelloAI.UI
                     // Request draft model
                     this.progress = 0;
 
-                    ImageData imageData = new ImageData(this.imageFilePath);
-                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageData.Base64String, imageData.Extension);
+                    var imageToken = await this.tripoAIService.RequestUploadImage(this.imageFilePath);
+                    var extension = Path.GetExtension(this.imageFilePath).Substring(1);
+                    var taskId = await this.tripoAIService.RequestImageToDraftModel(imageToken, extension);
 
                     if (string.IsNullOrEmpty(taskId))
                     {
@@ -221,6 +218,5 @@ namespace DonatelloAI.UI
                 }
             });
         }
-
     }
 }

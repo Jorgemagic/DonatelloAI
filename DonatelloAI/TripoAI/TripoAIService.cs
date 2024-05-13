@@ -7,6 +7,8 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
+using System.Net.Mime;
 
 namespace DonatelloAI.TripoAI
 {
@@ -92,7 +94,49 @@ namespace DonatelloAI.TripoAI
             return taskID;
         }
 
-        public async Task<string> RequestImageToDraftModel(string base64Image, string format)
+        public async Task<string> RequestUploadImage(string imagePath)
+        {
+            if (string.IsNullOrEmpty(api_key))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
+            string imageToken = string.Empty;
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
+                string uri = "https://api.tripo3d.ai/v2/openapi/upload";
+
+                MultipartFormDataContent requestContent = new MultipartFormDataContent();
+                var imageData = await File.ReadAllBytesAsync(imagePath);
+                var imageContent = new ByteArrayContent(imageData);                
+                var imageName = Path.GetFileName(imagePath);                
+                requestContent.Add(imageContent, "file", imageName);
+
+                try
+                {
+                    var result = await client.PostAsync(uri, requestContent);
+                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    {
+                        var response = await result.Content.ReadAsStringAsync();
+                        var tripoResponse = JsonConvert.DeserializeObject<UploadResponse>(response);
+                        if (tripoResponse != null)
+                        {
+                            imageToken = tripoResponse.data.image_token;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+            };
+
+            return imageToken;
+        }
+
+        public async Task<string> RequestImageToDraftModel(string imageToken, string format)
         {
             if (string.IsNullOrEmpty(api_key))
             {
@@ -105,7 +149,7 @@ namespace DonatelloAI.TripoAI
 
             Dictionary<string, string> fileData = new Dictionary<string, string>();
             fileData.Add("type", format);
-            fileData.Add("data", base64Image);
+            fileData.Add("file_token", imageToken);
 
             parameters.Add("file", fileData);
 
@@ -140,6 +184,7 @@ namespace DonatelloAI.TripoAI
 
             return taskID;
         }
+
 
         public async Task<TripoResponse> GetTaskStatus(string task_id)
         {
