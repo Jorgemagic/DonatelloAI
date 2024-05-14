@@ -16,8 +16,8 @@ namespace DonatelloAI.UI
     {
         private TripoAIService tripoAIService;
         
-        private byte[] promptTextBuffer = new byte[256];
-        private byte[] negativeTextBuffer = new byte[256];
+        private byte[] promptTextBuffer = new byte[1024];
+        private byte[] negativeTextBuffer = new byte[1024];
 
         private IntPtr image;
         private CustomImGuiManager imGuiManager;
@@ -54,13 +54,14 @@ namespace DonatelloAI.UI
             if (this.OpenWindow)
             {
                 ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
-                ImguiNative.igSetNextWindowSize(new Vector2(333, 465), ImGuiCond.Appearing);
+                ImguiNative.igSetNextWindowSize(new Vector2(333, 495), ImGuiCond.Appearing);
                 ImguiNative.igBegin("Text to Model", this.openWindow.Pointer(), ImGuiWindowFlags.NoResize);
 
                 var buttonSize = new Vector2(50, 19);
                 fixed (byte* promptBuffer = promptTextBuffer)
                 fixed (byte* negativeBuffer = negativeTextBuffer)
-                {                                        
+                {
+                    ImguiNative.igText("Prompt");
                     ImguiNative.igInputTextMultiline(                  
                         "##prompt",                        
                         promptBuffer,
@@ -70,6 +71,7 @@ namespace DonatelloAI.UI
                         null,
                         null);
 
+                    ImguiNative.igText("Negative (Optional)");
                     ImguiNative.igInputTextMultiline(
                         "##negative",
                         negativeBuffer,
@@ -134,6 +136,7 @@ namespace DonatelloAI.UI
                 {
                     // Request draft model
                     this.progress = 0;
+                    this.msg = $"Starting the request ...";
                     var taskId = await this.tripoAIService.RequestADraftModel(prompt);
 
                     if (string.IsNullOrEmpty(taskId))

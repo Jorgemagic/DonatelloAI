@@ -169,6 +169,7 @@ namespace DonatelloAI.UI
                     // Request draft model
                     this.progress = 0;
 
+                    this.msg = $"Starting the request ...";
                     var imageToken = await this.tripoAIService.RequestUploadImage(this.imageFilePath);
                     var extension = Path.GetExtension(this.imageFilePath).Substring(1);
                     var taskId = await this.tripoAIService.RequestImageToDraftModel(imageToken, extension);
