@@ -8,10 +8,6 @@ I've developed a desktop tool leveraging __[TripoAI's service](https://platform.
 
 [![Video1](Screenshots/TripoAI-screenshot.png)](https://youtu.be/4h0niYYxv08)
 
-[![Video2](Screenshots/refine_animate_screenshot.png)](https://youtu.be/tMIblPzj7Rk)
-
-[![Video3](Screenshots/image-to-model.png)](https://www.youtube.com/watch?v=eK2TKLc32ZY)
-
 ## How to use
 
 - Download the last [release](https://github.com/Jorgemagic/DonatelloAI/releases/latest)
@@ -19,3 +15,13 @@ I've developed a desktop tool leveraging __[TripoAI's service](https://platform.
 - Run the __DonatelloAI.windows.exe__ file.
 - Set the API key in DonatelloAI by navigating to _File->Settings->Set Tripo API key_
 - Start creating your 3D models by inputting your first prompt.
+
+
+## More videos
+
+[![Video2](Screenshots/refine_animate_screenshot.png)](https://youtu.be/tMIblPzj7Rk)
+
+[![Video3](Screenshots/image-to-model.png)](https://www.youtube.com/watch?v=eK2TKLc32ZY)
+
+[![Video4](Screenshots/stylization.png)](https://youtu.be/CnJmdrukPUM)
+
