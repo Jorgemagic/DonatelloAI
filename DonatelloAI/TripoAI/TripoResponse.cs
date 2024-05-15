@@ -23,6 +23,7 @@
     public class Input
     {
         public string prompt { get; set; }
+        public string original_model_id { get; set; }
     }
 
     public class Output
@@ -31,6 +32,7 @@
         public string rendered_image { get; set; }
 
         public string rendered_video { get; set; }
+        public bool riggable { get; set; }
     }
 
     public class Result

@@ -56,7 +56,7 @@ namespace DonatelloAI.UI
 
                     if (ImguiNative.igMenuItem_Bool("Animate", null, false, true))
                     {
-                        this.taskManager.OldRequestAnimateModel();
+                        this.taskManager.RequestAnimateModel();
                         this.showContextMenu = false;
                     }
 

@@ -5,7 +5,9 @@
         public enum TaskType
         {
             Refine,
-            Animate,
+            PreRigCheck,
+            Rig,
+            Retarget,
             Lego,
             Voxel,
             Voronoi,
