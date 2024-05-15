@@ -69,7 +69,7 @@ namespace DonatelloAI.SceneManagers
             });
         }
 
-        public void RequestAnimateModel()
+        public void OldRequestAnimateModel()
         {
             Task.Run(async () =>
             {
@@ -91,7 +91,7 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request animate Model
-                    var animateTaskId = await this.tripoAIService.RequestAnimateModel(task_id);
+                    var animateTaskId = await this.tripoAIService.OldRequestAnimateModel(task_id);
                     //var animateTaskId = "0eeaa2ec-fbd6-4f8a-9d67-c56ccbab01f4";
 
                     TripoResponse tripoResponse = null;

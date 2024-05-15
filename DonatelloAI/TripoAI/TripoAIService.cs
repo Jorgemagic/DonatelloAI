@@ -256,7 +256,7 @@ namespace DonatelloAI.TripoAI
             return refineTaskId;
         }
 
-        public async Task<string> RequestAnimateModel(string task_id)
+        public async Task<string> OldRequestAnimateModel(string task_id)
         {
             if (string.IsNullOrEmpty(api_key))
             {
@@ -298,6 +298,50 @@ namespace DonatelloAI.TripoAI
             };
 
             return animateTaskId;
+        }
+
+        public async Task<string> RequestPreRigCheck(string task_id)
+        {
+            if (string.IsNullOrEmpty(api_key))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("type", "animate_prerigcheck");
+            parameters.Add("original_model_task_id", task_id);
+
+            string parametersJsonString = JsonConvert.SerializeObject(parameters);
+
+            string preRigCheckTaskId = string.Empty;
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
+                string uri = "https://api.tripo3d.ai/v2/openapi/task";
+                StringContent jsonContent = new StringContent(parametersJsonString,
+                     Encoding.UTF8,
+                    "application/json");
+
+                try
+                {
+                    var result = await client.PostAsync(uri, jsonContent);
+                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    {
+                        var response = await result.Content.ReadAsStringAsync();
+                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                        if (tripoResponse != null)
+                        {
+                            preRigCheckTaskId = tripoResponse.data.task_id;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+            };
+
+            return preRigCheckTaskId;
         }
 
         public async Task<string> RequestStylization(string task_id, Styles style)
