@@ -41,7 +41,7 @@ namespace DonatelloAI.UI
             if (this.showContextMenu)
             {
                 ImguiNative.igSetNextWindowPos(this.contextMenuPosition, ImGuiCond.None, Vector2.Zero);
-                ImguiNative.igSetNextWindowSize(new Vector2(125, 125), ImGuiCond.None);
+                ImguiNative.igSetNextWindowSize(new Vector2(125, 165), ImGuiCond.None);
                 ImguiNative.igBegin("Context Menu", this.imguiBars.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove);
 
                 try
@@ -54,9 +54,23 @@ namespace DonatelloAI.UI
                         this.showContextMenu = false;
                     }
 
-                    if (ImguiNative.igMenuItem_Bool("Animate", null, false, true))
+                    ImguiNative.igSeparator();
+
+                    if (ImguiNative.igMenuItem_Bool("Animate - Walk", null, false, true))
                     {
-                        this.taskManager.RequestAnimateModel();
+                        this.taskManager.RequestAnimateModel(TripoAI.TripoAIService.Animations.Walk);
+                        this.showContextMenu = false;
+                    }
+
+                    if (ImguiNative.igMenuItem_Bool("Animate - Run", null, false, true))
+                    {
+                        this.taskManager.RequestAnimateModel(TripoAI.TripoAIService.Animations.Run);
+                        this.showContextMenu = false;
+                    }
+
+                    if (ImguiNative.igMenuItem_Bool("Animate - Dive", null, false, true))
+                    {
+                        this.taskManager.RequestAnimateModel(TripoAI.TripoAIService.Animations.Dive);
                         this.showContextMenu = false;
                     }
 

@@ -3,6 +3,7 @@ using Evergine.Framework;
 using Evergine.Framework.Managers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static DonatelloAI.TripoAI.TripoAIService;
 
 namespace DonatelloAI.SceneManagers
 {
@@ -68,16 +69,16 @@ namespace DonatelloAI.SceneManagers
             });
         }
 
-        public void RequestAnimateModel()
+        public void RequestAnimateModel(Animations animation)
         {
             Task.Run(async () =>
             {
                 // Get task id
-                //string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();
-                string task_id = "bc6322ec-6466-48d1-9a6c-b4faff273898";
+                string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();
+                //string task_id = "bc6322ec-6466-48d1-9a6c-b4faff273898";
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
-                //if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
+                if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus taskStatus = new TaskStatus()
                     {
@@ -105,7 +106,7 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress = data.progress;
+                        taskStatus.progress = data.progress / 3;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
@@ -115,13 +116,12 @@ namespace DonatelloAI.SceneManagers
                         return;
                     }
 
-                    // Request Rig
-                    taskStatus.progress = 0;
+                    // Request Rig                    
                     taskStatus.Type = TaskStatus.TaskType.Rig;
                     taskStatus.msg = "starting";
                     status = string.Empty;
-                    //var rigTaskId = await this.tripoAIService.RequestRig(task_id);
-                    var rigTaskId = "c00c187d-f1b6-4157-8e17-63ece06df4cb";
+                    var rigTaskId = await this.tripoAIService.RequestRig(task_id);
+                    //var rigTaskId = "c00c187d-f1b6-4157-8e17-63ece06df4cb";
 
                     // Waiting to task completed                                    
                     while (status == string.Empty ||
@@ -133,19 +133,18 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress = data.progress;
+                        taskStatus.progress += data.progress / 3;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
                     if (status != "success") return;
 
                     // Request Retarget
-                    taskStatus.progress = 0;
                     taskStatus.Type = TaskStatus.TaskType.Retarget;
                     taskStatus.msg = "starting";
                     status = string.Empty;
-                    //var retargetTaskId = await this.tripoAIService.RequestRetarget(rigTaskId, TripoAIService.Animations.Run);
-                    var retargetTaskId = "8f9a7f17-09fb-422c-8eec-a060664acf5f";
+                    var retargetTaskId = await this.tripoAIService.RequestRetarget(rigTaskId, animation);
+                    //var retargetTaskId = "8f9a7f17-09fb-422c-8eec-a060664acf5f";
 
                     // Waiting to task completed                                    
                     while (status == string.Empty ||
@@ -157,7 +156,7 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress = data.progress;
+                        taskStatus.progress += data.progress / 3;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
