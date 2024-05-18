@@ -1,14 +1,13 @@
-﻿using Evergine.Bindings.Imgui;
+﻿using DonatelloAI.ImGui;
+using DonatelloAI.SceneManagers;
+using DonatelloAI.TripoAI;
+using Evergine.Bindings.Imgui;
 using Evergine.Framework;
 using Evergine.Mathematics;
 using Evergine.UI;
-using DonatelloAI.ImGui;
-using DonatelloAI.SceneManagers;
-using DonatelloAI.TripoAI;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 
 namespace DonatelloAI.UI
 {
@@ -99,7 +98,9 @@ namespace DonatelloAI.UI
                     {
                         if (ImguiNative.igImageButton(this.image, Vector2.One * 315, Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
                         {
-                            this.modelCollectionManager.DownloadModel(this.tripoResponse);
+                            var modelURL = this.tripoResponse.data.output.model;
+                            var taskId = this.tripoResponse.data.task_id;
+                            this.modelCollectionManager.DownloadModel(modelURL, taskId);
                             this.OpenWindow = false;
                         }
                     }

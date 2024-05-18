@@ -87,7 +87,9 @@ namespace DonatelloAI.UI
                     {
                         if (this.tripoResponse != null)
                         {
-                            this.modelCollectionManager.DownloadModel(this.tripoResponse);
+                            var modelURL = tripoResponse.data.output.model;
+                            var taskID = this.tripoResponse.data.task_id;
+                            this.modelCollectionManager.DownloadModel(modelURL, taskID);
                             this.OpenWindow = false;
                         }
                     }

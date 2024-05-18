@@ -38,7 +38,7 @@ namespace DonatelloAI.UI
             this.textToModelPanel = new TextToModelPanel(imguiManager, modelCollectionManager);
             this.imageToModelPanel = new ImageToModelPanel(imguiManager, modelCollectionManager);
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
-            this.modelContextMenu = new ModelContextMenu(taskManager);
+            this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager);
             this.taskListPanel = new TaskListPanel(taskManager);
             this.menuBar = new MenuBar(this);            
         }

@@ -22,14 +22,14 @@ namespace DonatelloAI.SceneManagers
             Task.Run(async () =>
             {
                 // Get task id
-                string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
-                if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
+                if (modelData != null && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus taskStatus = new TaskStatus()
                     {
-                        TaskId = task_id,
+                        TaskId = modelData.TaskId,
                         Type = TaskStatus.TaskType.Refine,
                         ModelName = entityTag,
                         progress = 0,
@@ -38,11 +38,12 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request refine Model
-                    var refineTaskId = await this.tripoAIService.RequestRefineModel(task_id);
+                    var refineTaskId = await this.tripoAIService.RequestRefineModel(modelData.TaskId);
 
                     if (string.IsNullOrEmpty(refineTaskId)) return;
 
                     TripoResponse tripoResponse = null;
+
                     // Waiting to task completed                
                     string status = string.Empty;
                     while (status == string.Empty ||
@@ -63,26 +64,27 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
 
-                        this.modelCollectionManager.DownloadModel(tripoResponse, entityTag + "_refined");
+                        var modelURL = tripoResponse.data.output.model;
+                        var taskID = refineTaskId;
+                        this.modelCollectionManager.DownloadModel(modelURL, refineTaskId, entityTag + "_refined");
                     }
                 }
             });
         }
 
-        public void RequestAnimateModel(Animations animation)
+        public void RequestPreRigCheckModel()
         {
             Task.Run(async () =>
             {
                 // Get task id
-                string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();
-                //string task_id = "bc6322ec-6466-48d1-9a6c-b4faff273898";
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();                
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
-                if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
+                if (modelData != null && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus taskStatus = new TaskStatus()
                     {
-                        TaskId = task_id,
+                        TaskId = modelData.TaskId,
                         Type = TaskStatus.TaskType.PreRigCheck,
                         ModelName = entityTag,
                         progress = 0,
@@ -91,7 +93,7 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request PreRigCheck
-                    var checkTaskId = await this.tripoAIService.RequestPreRigCheck(task_id);
+                    var checkTaskId = await this.tripoAIService.RequestPreRigCheck(modelData.TaskId);
 
                     TripoResponse tripoResponse = null;
 
@@ -106,24 +108,54 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress = data.progress / 3;
+                        taskStatus.progress = data.progress;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
-                    if (status != "success" || !tripoResponse.data.output.riggable)
+                    if (status == "success")
                     {
-                        // Show dialog
-                        return;
+                        modelData.IsRiggeable = tripoResponse.data.output.riggable;
+                        taskStatus.progress = 100;
+                        taskStatus.msg = $"status:{status}";
                     }
+                }
+            });
+        }
 
-                    // Request Rig                    
-                    taskStatus.Type = TaskStatus.TaskType.Rig;
-                    taskStatus.msg = "starting";
-                    status = string.Empty;
-                    var rigTaskId = await this.tripoAIService.RequestRig(task_id);
-                    //var rigTaskId = "c00c187d-f1b6-4157-8e17-63ece06df4cb";
+        public void RequestRigModel()
+        {
+            Task.Run(async () =>
+            {
+                // Get task id
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();
 
-                    // Waiting to task completed                                    
+                if (!modelData.IsRiggeable.HasValue ||
+                    !modelData.IsRiggeable.Value)
+                {
+                    throw new System.Exception("Model is not riggeable");                    
+                }
+
+                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
+
+                if (modelData != null && !string.IsNullOrEmpty(entityTag))
+                {
+                    TaskStatus taskStatus = new TaskStatus()
+                    {
+                        TaskId = modelData.TaskId,
+                        Type = TaskStatus.TaskType.Rig,
+                        ModelName = entityTag,
+                        progress = 0,
+                        msg = "starting",
+                    };
+                    this.TaskCollection.Add(taskStatus);
+
+                    // Request Rig                                   
+                    var rigTaskId = await this.tripoAIService.RequestRig(modelData.TaskId);
+
+                    TripoResponse tripoResponse = null;
+
+                    // Waiting to task completed
+                    string status = string.Empty;
                     while (status == string.Empty ||
                            status == "queued" ||
                            status == "running")
@@ -133,20 +165,55 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress += data.progress / 3;
+                        taskStatus.progress += data.progress;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
-                    if (status != "success") return;
+                    if (status == "success")
+                    {
+                        modelData.RigTaskId = rigTaskId;
 
-                    // Request Retarget
-                    taskStatus.Type = TaskStatus.TaskType.Retarget;
-                    taskStatus.msg = "starting";
-                    status = string.Empty;
-                    var retargetTaskId = await this.tripoAIService.RequestRetarget(rigTaskId, animation);
-                    //var retargetTaskId = "8f9a7f17-09fb-422c-8eec-a060664acf5f";
+                        taskStatus.progress = 100;
+                        taskStatus.msg = $"status:{status}";
+                    }
+                }
+            });
+        }
 
-                    // Waiting to task completed                                    
+
+        public void RequestAnimateModel(Animations animation)
+        {
+            Task.Run(async () =>
+            {
+                // Get task id
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();
+
+                if (string.IsNullOrEmpty(modelData.RigTaskId))
+                {
+                    throw new System.Exception("The model needs to be rigged before to be animated");
+                }
+                
+                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
+
+                if (modelData != null && !string.IsNullOrEmpty(entityTag))
+                {
+                    TaskStatus taskStatus = new TaskStatus()
+                    {
+                        TaskId = modelData.TaskId,
+                        Type = TaskStatus.TaskType.Retarget,
+                        ModelName = entityTag,
+                        progress = 0,
+                        msg = "starting",
+                    };
+                    this.TaskCollection.Add(taskStatus);                    
+
+                    // Request Retarget                                        
+                    var retargetTaskId = await this.tripoAIService.RequestRetarget(modelData.RigTaskId, animation);
+
+                    TripoResponse tripoResponse = null;
+
+                    // Waiting to task completed
+                    string status = string.Empty;
                     while (status == string.Empty ||
                            status == "queued" ||
                            status == "running")
@@ -156,7 +223,7 @@ namespace DonatelloAI.SceneManagers
 
                         var data = tripoResponse.data;
                         status = data.status;
-                        taskStatus.progress += data.progress / 3;
+                        taskStatus.progress += data.progress;
                         taskStatus.msg = $"status:{status} progress:{data.progress}";
                     }
 
@@ -165,7 +232,8 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
 
-                        this.modelCollectionManager.DownloadModel(tripoResponse, entityTag + "_animated");
+                        var modelURL = tripoResponse.data.output.model;
+                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, entityTag + "_animated");
                     }
                 }
             });
@@ -176,10 +244,10 @@ namespace DonatelloAI.SceneManagers
             Task.Run(async () =>
             {
                 // Get task id
-                string task_id = this.modelCollectionManager.FindTaskByCurrentSelectedEntity();                
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();                
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;                
 
-                if (!string.IsNullOrEmpty(task_id) && !string.IsNullOrEmpty(entityTag))
+                if (modelData != null && !string.IsNullOrEmpty(entityTag))
                 {
                     TaskStatus.TaskType taskType = default;
                     switch (style)
@@ -199,7 +267,7 @@ namespace DonatelloAI.SceneManagers
 
                     TaskStatus taskStatus = new TaskStatus()
                     {
-                        TaskId = task_id,
+                        TaskId = modelData.TaskId,
                         Type = taskType,
                         ModelName = entityTag,
                         progress = 0,
@@ -208,7 +276,7 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request refine Model
-                    var stylizationTaskId = await this.tripoAIService.RequestStylization(task_id, style);                    
+                    var stylizationTaskId = await this.tripoAIService.RequestStylization(modelData.TaskId, style);                    
                     if (string.IsNullOrEmpty(stylizationTaskId)) return;
 
                     TripoResponse tripoResponse = null;
@@ -232,7 +300,8 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
 
-                        this.modelCollectionManager.DownloadModel(tripoResponse, entityTag + $"_{style}");
+                        var modelURL = tripoResponse.data.output.model;
+                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, entityTag + $"_{style}");
                     }
                 }
             });

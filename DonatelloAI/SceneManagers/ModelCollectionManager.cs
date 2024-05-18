@@ -1,14 +1,12 @@
-﻿using Evergine.Components.Animation;
+﻿using DonatelloAI.Importers.GLB;
+using DonatelloAI.TripoAI;
+using Evergine.Components.Animation;
 using Evergine.Framework;
-using Evergine.Framework.Assets;
 using Evergine.Framework.Graphics;
 using Evergine.Framework.Managers;
 using Evergine.Framework.Physics3D;
 using Evergine.Framework.Services;
 using Evergine.Mathematics;
-using glTFLoader.Schema;
-using DonatelloAI.Importers.GLB;
-using DonatelloAI.TripoAI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,7 +28,7 @@ namespace DonatelloAI.SceneManagers
         [BindService]
         public ScreenContextManager screenContextManager = null;
 
-        private Dictionary<string, string> collection = new Dictionary<string, string>();
+        private Dictionary<string, ModelData> collection = new Dictionary<string, ModelData>();
 
         public Entity CurrentSelectedEntity = null;
 
@@ -39,19 +37,14 @@ namespace DonatelloAI.SceneManagers
         private const string TEMP_FOLDER = "Temp";
         private const string FBX2GLB_Path = "FBX2glTF.exe";
 
-        public void AddModel(string modelName, string task_id)
-        {
-            this.collection.Add(modelName, task_id);
-        }
-
-        public string FindTaskByCurrentSelectedEntity()
+        public ModelData FindModelDataByCurrentSelectedEntity()
         {
             if (this.CurrentSelectedEntity != null)
             {
                 string tag = this.CurrentSelectedEntity.Tag;
                 if (!string.IsNullOrEmpty(tag))
                 {
-                    if (this.collection.TryGetValue(tag, out string result))
+                    if (this.collection.TryGetValue(tag, out ModelData result))
                     {
                         return result;
                     }
@@ -61,7 +54,7 @@ namespace DonatelloAI.SceneManagers
             return null;
         }
 
-        public void DownloadModel(TripoResponse tripoResponse, string entityTag = null)
+        public void DownloadModel(string modelURL, string taskId, string entityTag = null)
         {
             if (this.isBusy) return;
 
@@ -69,11 +62,16 @@ namespace DonatelloAI.SceneManagers
             {
                 this.IsBusyChanged?.Invoke(this, true);
 
-                string url = tripoResponse.data.output.model;
-                var result = this.GetFilePathFromUrl(url, entityTag);
-                var model = await this.DownloadModelFromURL(url, result.filePath);
-                
-                this.collection.Add(result.fileName, tripoResponse.data.task_id);
+                var result = this.GetFilePathFromUrl(modelURL, entityTag);
+                var model = await this.DownloadModelFromURL(modelURL, result.filePath);
+
+                if (!string.IsNullOrEmpty(taskId))
+                {
+                    ModelData modelData = new ModelData();
+                    modelData.TaskId = taskId;
+                    this.collection.Add(result.fileName, modelData);
+                }
+
                 var currentScene = screenContextManager.CurrentContext[0];
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
