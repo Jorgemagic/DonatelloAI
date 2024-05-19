@@ -1,6 +1,7 @@
 ﻿using DonatelloAI.TripoAI;
 using Evergine.Framework;
 using Evergine.Framework.Managers;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using static DonatelloAI.TripoAI.TripoAIService;
@@ -9,6 +10,8 @@ namespace DonatelloAI.SceneManagers
 {
     public class TaskManager : SceneManager
     {
+        public event EventHandler<string> InfoEvent;
+
         [BindService]
         private TripoAIService tripoAIService = null;
 
@@ -117,6 +120,11 @@ namespace DonatelloAI.SceneManagers
                         modelData.IsRiggeable = tripoResponse.data.output.riggable;
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
+                        this.InfoEvent?.Invoke(this, $"The model {entityTag} can be rigged");
+                    }
+                    else
+                    {
+                        this.InfoEvent?.Invoke(this, $"The model {entityTag} cannot be rigged");
                     }
                 }
             });
@@ -175,6 +183,7 @@ namespace DonatelloAI.SceneManagers
 
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
+                        this.InfoEvent?.Invoke(this, $"The model {entityTag} has been rigged");
                     }
                 }
             });

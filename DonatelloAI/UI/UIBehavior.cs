@@ -1,20 +1,16 @@
-﻿using Evergine.Bindings.Imgui;
+﻿using DonatelloAI.ImGui;
+using DonatelloAI.SceneManagers;
+using Evergine.Bindings.Imgui;
 using Evergine.Bindings.Imguizmo;
-using Evergine.Common.Input;
-using Evergine.Common.Input.Keyboard;
 using Evergine.Framework;
-using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using Evergine.UI;
-using DonatelloAI.ImGui;
-using DonatelloAI.SceneManagers;
 using System;
 
 namespace DonatelloAI.UI
 {
     public unsafe class UIBehavior : Behavior
     {        
-
         [BindSceneManager]
         private CustomImGuiManager imguiManager = null;
 
@@ -27,6 +23,7 @@ namespace DonatelloAI.UI
         private TextToModelPanel textToModelPanel;
         private ImageToModelPanel imageToModelPanel;
         private LoadingPanel loadingPanel;
+        private InfoDialog infoDialog;
         private ModelContextMenu modelContextMenu;
         private TaskListPanel taskListPanel;
         private MenuBar menuBar;
@@ -38,6 +35,7 @@ namespace DonatelloAI.UI
             this.textToModelPanel = new TextToModelPanel(imguiManager, modelCollectionManager);
             this.imageToModelPanel = new ImageToModelPanel(imguiManager, modelCollectionManager);
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
+            this.infoDialog = new InfoDialog(this.taskManager);
             this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager);
             this.taskListPanel = new TaskListPanel(taskManager);
             this.menuBar = new MenuBar(this);            
@@ -90,6 +88,7 @@ namespace DonatelloAI.UI
             this.textToModelPanel.Show(ref io);
             this.imageToModelPanel.Show(ref io);
             this.loadingPanel.Show(ref io);
+            this.infoDialog.Show(ref io);
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
             this.menuBar.Show(ref io);
