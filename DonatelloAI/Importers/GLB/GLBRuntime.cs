@@ -63,7 +63,7 @@ namespace DonatelloAI.Importers.GLB
         private byte[] binaryChunk;
         private BufferInfo[] bufferInfos;
 
-        private Func<Color, Texture, SamplerState, AlphaModeEnum, float, float, bool, Material> materialAssigner = null;
+        private Func<Color, Texture, SamplerState, AlphaModeEnum, float, float, string[], Material> materialAssigner = null;
 
         // If the bufferView is compressed (Draco), we can cache the decoded data
         // next time we find a primitive that references this bufferView, we can check if the buffer has been already decoded
@@ -536,7 +536,8 @@ namespace DonatelloAI.Importers.GLB
             if (primitive.Material.HasValue)
             {
                 int materialId = primitive.Material.Value;
-                materialIndex = await this.ReadMaterial(materialId, vertexColorEnabled);
+                var vertexAttributes = primitive.Attributes.Keys.ToArray();
+                materialIndex = await this.ReadMaterial(materialId, vertexAttributes);
             }
 
             // Create Mesh
@@ -822,7 +823,7 @@ namespace DonatelloAI.Importers.GLB
             }
         }
 
-        private async Task<int> ReadMaterial(int materialId, bool vertexColorEnabled)
+        private async Task<int> ReadMaterial(int materialId, string[] vertexAttributes)
         {
             var glbMaterial = this.glbModel.Materials[materialId];
             if (!this.materials.ContainsKey(materialId))
@@ -873,14 +874,14 @@ namespace DonatelloAI.Importers.GLB
 
                 if (this.materialAssigner == null)
                 {
-                    material = this.CreateEngineMaterial(baseColor.ToColor(), baseColorTexture, baseColorSampler, glbMaterial.AlphaMode, baseColor.A, glbMaterial.AlphaCutoff, vertexColorEnabled);
+                    material = this.CreateEngineMaterial(baseColor.ToColor(), baseColorTexture, baseColorSampler, glbMaterial.AlphaMode, baseColor.A, glbMaterial.AlphaCutoff, vertexAttributes);
                 }
                 else
                 {
-                    material = this.materialAssigner(baseColor.ToColor(), baseColorTexture, baseColorSampler, glbMaterial.AlphaMode, baseColor.A, glbMaterial.AlphaCutoff, vertexColorEnabled);
+                    material = this.materialAssigner(baseColor.ToColor(), baseColorTexture, baseColorSampler, glbMaterial.AlphaMode, baseColor.A, glbMaterial.AlphaCutoff, vertexAttributes);
                 }
 
-                this.materials.Add(materialId, (glbMaterial.Name, material));
+                this.materials.Add(materialId, (glbMaterial.Name ?? $"material{materialId}", material));
 
                 return this.materials.Count - 1;
             }
@@ -888,7 +889,7 @@ namespace DonatelloAI.Importers.GLB
             return this.materials.Keys.ToList().IndexOf(materialId);
         }
 
-        private Material CreateEngineMaterial(Color baseColor, Texture baseColorTexture, SamplerState baseColorSampler, AlphaModeEnum alphaMode, float alpha, float alphaCutOff, bool vertexColorEnabled)
+        private Material CreateEngineMaterial(Color baseColor, Texture baseColorTexture, SamplerState baseColorSampler, AlphaModeEnum alphaMode, float alpha, float alphaCutOff, string[] vertexAttributes)
         {
             RenderLayerDescription layer;
             switch (alphaMode)
@@ -905,10 +906,12 @@ namespace DonatelloAI.Importers.GLB
 
             var effect = this.assetsService.Load<Effect>(DefaultResourcesIDs.StandardEffectID);
 
+            var hasNormalAttribute = vertexAttributes.Contains("NORMAL");
+            var hasVertexColor = vertexAttributes.Contains("COLOR");
             StandardMaterial material = new StandardMaterial(effect)
             {
-                LightingEnabled = true,
-                IBLEnabled = true,
+                LightingEnabled = hasNormalAttribute,
+                IBLEnabled = hasNormalAttribute,
                 BaseColor = baseColor,
                 Alpha = alpha,
                 BaseColorTexture = baseColorTexture,
@@ -917,7 +920,7 @@ namespace DonatelloAI.Importers.GLB
                 AlphaCutout = alphaCutOff,
             };
 
-            if (vertexColorEnabled)
+            if (hasVertexColor)
             {
                 if (material.ActiveDirectivesNames.Contains("VCOLOR"))
                 {
