@@ -9,7 +9,11 @@ namespace DonatelloAI.UI
     {
         private bool showDialog = false;
 
-        public bool ShowDialog { get; set; }
+        public bool ShowDialog
+        {
+            get => this.showDialog;
+            set => this.showDialog = value;
+        }
 
         public string Message { get; set; }
 
@@ -32,12 +36,20 @@ namespace DonatelloAI.UI
             Vector2 textSize;
             ImguiNative.igCalcTextSize(&textSize, this.Message, null, false, 320);
 
+            Vector2 windowsSize = new Vector2(340, textSize.Y + 70);
             ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
-            ImguiNative.igSetNextWindowSize(new Vector2(340, textSize.Y + 150), ImGuiCond.None);
+            ImguiNative.igSetNextWindowSize(windowsSize, ImGuiCond.None);
             ImguiNative.igBegin("Info Dialog", this.showDialog.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize);
 
             ImguiNative.igTextWrapped(this.Message);
-            if (ImguiNative.igButton("Ok", new Vector2(60,20)))
+            ImguiNative.igSpacing();
+            ImguiNative.igSpacing();
+
+            Vector2 cursor = Vector2.Zero;
+            ImguiNative.igGetCursorPos(&cursor);
+            cursor.X += (windowsSize.X * 0.5f) - 40;
+            ImguiNative.igSetCursorPos(cursor);
+            if (ImguiNative.igButton("Ok", new Vector2(60, 20)))
             {
                 this.showDialog = false;
             }
