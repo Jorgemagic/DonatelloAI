@@ -80,7 +80,7 @@ namespace DonatelloAI.SceneManagers
             Task.Run(async () =>
             {
                 // Get task id
-                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();                
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
                 if (modelData != null && !string.IsNullOrEmpty(entityTag))
@@ -120,11 +120,15 @@ namespace DonatelloAI.SceneManagers
                         modelData.IsRiggeable = tripoResponse.data.output.riggable;
                         taskStatus.progress = 100;
                         taskStatus.msg = $"status:{status}";
-                        this.InfoEvent?.Invoke(this, $"Success: The model {entityTag} can be rigged");
-                    }
-                    else
-                    {
-                        this.InfoEvent?.Invoke(this, $"Failed: The model {entityTag} cannot be rigged");
+
+                        if (tripoResponse.data.output.riggable)
+                        {
+                            this.InfoEvent?.Invoke(this, $"Success: The model {entityTag} can be rigged");
+                        }
+                        else
+                        {
+                            this.InfoEvent?.Invoke(this, $"Failed: The model {entityTag} cannot be rigged");
+                        }
                     }
                 }
             });
@@ -140,7 +144,7 @@ namespace DonatelloAI.SceneManagers
                 if (!modelData.IsRiggeable.HasValue ||
                     !modelData.IsRiggeable.Value)
                 {
-                    throw new System.Exception("Model is not riggeable");                    
+                    throw new System.Exception("Model is not riggeable");
                 }
 
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
@@ -205,7 +209,7 @@ namespace DonatelloAI.SceneManagers
                 {
                     throw new System.Exception("The model needs to be rigged before to be animated");
                 }
-                
+
                 string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
                 if (modelData != null && !string.IsNullOrEmpty(entityTag))
@@ -218,7 +222,7 @@ namespace DonatelloAI.SceneManagers
                         progress = 0,
                         msg = "starting",
                     };
-                    this.TaskCollection.Add(taskStatus);                    
+                    this.TaskCollection.Add(taskStatus);
 
                     // Request Retarget                                        
                     var retargetTaskId = await this.tripoAIService.RequestRetarget(modelData.RigTaskId, animation);
@@ -257,8 +261,8 @@ namespace DonatelloAI.SceneManagers
             Task.Run(async () =>
             {
                 // Get task id
-                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();                
-                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;                
+                var modelData = this.modelCollectionManager.FindModelDataByCurrentSelectedEntity();
+                string entityTag = this.modelCollectionManager.CurrentSelectedEntity?.Tag;
 
                 if (modelData != null && !string.IsNullOrEmpty(entityTag))
                 {
@@ -289,7 +293,7 @@ namespace DonatelloAI.SceneManagers
                     this.TaskCollection.Add(taskStatus);
 
                     // Request refine Model
-                    var stylizationTaskId = await this.tripoAIService.RequestStylization(modelData.TaskId, style);                    
+                    var stylizationTaskId = await this.tripoAIService.RequestStylization(modelData.TaskId, style);
                     if (string.IsNullOrEmpty(stylizationTaskId)) return;
 
                     TripoResponse tripoResponse = null;
