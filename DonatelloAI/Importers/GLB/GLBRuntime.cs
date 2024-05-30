@@ -900,7 +900,7 @@ namespace DonatelloAI.Importers.GLB
                     layer = this.opaqueLayer;
                     break;
                 case AlphaModeEnum.BLEND:
-                    layer = alpha < 1.0f ? this.alphaLayer : opaqueLayer;
+                    layer = this.alphaLayer;
                     break;
             }
 
@@ -910,8 +910,8 @@ namespace DonatelloAI.Importers.GLB
             var hasVertexColor = vertexAttributes.Contains("COLOR");
             StandardMaterial material = new StandardMaterial(effect)
             {
-                LightingEnabled = hasNormalAttribute,
-                IBLEnabled = hasNormalAttribute,
+                LightingEnabled = false,
+                IBLEnabled = false,
                 BaseColor = baseColor,
                 Alpha = alpha,
                 BaseColorTexture = baseColorTexture,
