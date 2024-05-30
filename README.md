@@ -25,3 +25,5 @@ I've developed a desktop tool leveraging __[TripoAI's service](https://platform.
 
 [![Video4](Screenshots/stylization.png)](https://youtu.be/CnJmdrukPUM)
 
+[![Video5](Screenshots/NBA-screenshot.png)](https://youtu.be/CmQe5D1VYhg)
+
