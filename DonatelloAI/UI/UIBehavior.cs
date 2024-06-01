@@ -2,6 +2,7 @@
 using DonatelloAI.SceneManagers;
 using Evergine.Bindings.Imgui;
 using Evergine.Bindings.Imguizmo;
+using Evergine.Common.Graphics;
 using Evergine.Framework;
 using Evergine.Mathematics;
 using Evergine.UI;
@@ -10,7 +11,7 @@ using System;
 namespace DonatelloAI.UI
 {
     public unsafe class UIBehavior : Behavior
-    {        
+    {
         [BindSceneManager]
         private CustomImGuiManager imguiManager = null;
 
@@ -59,10 +60,10 @@ namespace DonatelloAI.UI
         {
             get => this.taskListPanel.OpenWindow;
             set => taskListPanel.OpenWindow = value;
-        }        
+        }
 
         protected override void Update(TimeSpan gameTime)
-        {            
+        {
             var io = ImguiNative.igGetIO();
             /*bool open = true;
             ImguiNative.igShowDemoWindow(open.Pointer());*/
@@ -72,10 +73,8 @@ namespace DonatelloAI.UI
 
             var camera = this.Managers.RenderManager.ActiveCamera3D;
             Matrix4x4 view = camera.View;
-            Matrix4x4 project = camera.Projection;
-
-            ImguizmoNative.ImGuizmo_ViewManipulate(view.Pointer(), 2, Vector2.Zero, new Vector2(128, 128), 0x10101010);
-
+            const int side = 128;
+            ImguizmoNative.ImGuizmo_ViewManipulate(&view.M11, 2, Vector2.Zero, Vector2.One * side, (uint)Color.Transparent.ToInt());
             Matrix4x4.Invert(ref view, out Matrix4x4 iview);
             var translation = iview.Translation;
             var rotation = iview.Rotation;
