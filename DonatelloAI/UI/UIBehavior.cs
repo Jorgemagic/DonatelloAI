@@ -40,7 +40,7 @@ namespace DonatelloAI.UI
             this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager, this);
             this.taskListPanel = new TaskListPanel(taskManager);
             this.menuBar = new MenuBar(this);
-            this.conversionPanel = new ConversionPanel();
+            this.conversionPanel = new ConversionPanel(this.loadingPanel);
         }
 
         public bool ShowTextToModelPanel

@@ -1,5 +1,4 @@
-﻿using DonatelloAI.Importers.GLB;
-using DonatelloAI.SceneManagers;
+﻿using DonatelloAI.SceneManagers;
 using DonatelloAI.TripoAI;
 using Evergine.Bindings.Imgui;
 using Evergine.Framework;
@@ -8,9 +7,7 @@ using Evergine.UI;
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Security.Policy;
 using System.Threading.Tasks;
-using static BulletSharp.DiscreteCollisionDetectorInterface;
 
 namespace DonatelloAI.UI
 {
@@ -19,8 +16,9 @@ namespace DonatelloAI.UI
         private TripoAIService tripoAIService;
 
         private TripoResponse tripoResponse;
+        private LoadingPanel loadingPanel;
 
-        private bool openWindow = true;
+        private bool openWindow = false;
 
         private int currentFormatIndex = 0;
         private bool quadEnabled = false;
@@ -34,18 +32,57 @@ namespace DonatelloAI.UI
         private int progress = 0;
         private string msg = string.Empty;
         private bool isBusy;
+        private int[] textureSizes = new int[] { 2048, 1024, 512, 256 };
 
         public bool OpenWindow
         {
             get => this.openWindow;
-            set => this.openWindow = value;
+            set
+            {
+                this.openWindow = value;
+                if (value)
+                {
+                    this.Reset();
+                }
+            }
         }
 
         public ModelData ModelData { get; set; }
 
-        public ConversionPanel()
+        public ConversionPanel(LoadingPanel loadingPanel)
         {
             this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
+            this.loadingPanel = loadingPanel;
+        }
+
+        private TripoAIService.ModelFormat ModelFormat
+        {
+            get
+            {
+                var values = (TripoAIService.ModelFormat[])Enum.GetValues(typeof(TripoAIService.ModelFormat));
+                return values[this.currentFormatIndex];
+            }
+        }
+
+        private int TextureSize
+        {
+            get => this.textureSizes[this.currentTextureSize];            
+        }
+
+        private TripoAIService.TextureFormat TextureFormat
+        {
+            get
+            {
+                var values = (TripoAIService.TextureFormat[])Enum.GetValues(typeof(TripoAIService.TextureFormat));
+                return values[this.currentTextureFormatIndex];
+            }
+        }
+
+        private void Reset()
+        {
+            this.progress = 0;
+            this.msg = string.Empty;
+            this.isBusy = false;            
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -55,7 +92,7 @@ namespace DonatelloAI.UI
             ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X * 0.5f, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, Vector2.One * 0.5f);
             ImguiNative.igSetNextWindowSize(new Vector2(400, 250), ImGuiCond.Appearing);
             ImguiNative.igBegin("Conversion", this.openWindow.Pointer(), ImGuiWindowFlags.NoResize);
-            
+
             string formats = "GLTF \0USDZ \0FBX \0OBJ \0STL \0";
             int formatIndex = this.currentFormatIndex;
             ImguiNative.igCombo_Str("Format", &formatIndex, formats, 100);
@@ -94,7 +131,7 @@ namespace DonatelloAI.UI
             ImguiNative.igProgressBar(this.progress / 100.0f, new Vector2(383 - buttonSize.X - 4, buttonSize.Y), this.msg);
             ImguiNative.igSameLine(0, 4);
             if (ImguiNative.igButton("Convert", buttonSize))
-            {                
+            {
                 this.RequestConversionModel();
             }
 
@@ -103,7 +140,7 @@ namespace DonatelloAI.UI
 
         private async void RequestConversionModel()
         {
-            if (this.isBusy || this.ModelData == null) return;            
+            if (this.isBusy || this.ModelData == null) return;
 
             string modelUri = null;
             await Task.Run(async () =>
@@ -116,14 +153,14 @@ namespace DonatelloAI.UI
                     this.progress = 0;
                     this.msg = $"Starting the request ...";
                     var taskId = await this.tripoAIService.RequestConversion(
-                                                                              "47c2ead9-ec6a-4f69-97e8-d1170f0c8fdf", //this.ModelData.TaskId,
-                                                                              TripoAIService.ModelFormat.STL,
+                                                                              this.ModelData.TaskId,
+                                                                              this.ModelFormat,
                                                                               this.quadEnabled,
                                                                               this.faceLimit,
                                                                               this.flattenBottomEnabled,
                                                                               this.flattenBottomThreshold,
-                                                                              2048,
-                                                                              TripoAIService.TextureFormat.JPEG,
+                                                                              this.TextureSize,
+                                                                              this.TextureFormat,
                                                                               this.relocatePivot
                                                                               );
 
@@ -148,7 +185,7 @@ namespace DonatelloAI.UI
 
                     if (status == "success")
                     {
-                        modelUri = this.tripoResponse.data.output.model;                        
+                        modelUri = this.tripoResponse.data.output.model;
                         this.msg = $"Done!";
                     }
                     else
@@ -163,6 +200,10 @@ namespace DonatelloAI.UI
                 }
             });
 
+            this.openWindow = false;
+
+            this.loadingPanel.IsBusy = true;
+
             // Saving converted file
             if (!string.IsNullOrEmpty(modelUri))
             {
@@ -170,7 +211,7 @@ namespace DonatelloAI.UI
                 fileNameWithExtension = fileNameWithExtension.Substring(0, fileNameWithExtension.IndexOf("?"));
                 string extension = Path.GetExtension(fileNameWithExtension);
 
-                string filter = $"{extension.Substring(1)} File ({extension})|*{extension}";                
+                string filter = $"{extension.Substring(1).ToUpperInvariant()} File ({extension})|*{extension}";
 
                 using (System.Windows.Forms.SaveFileDialog saveFileDialog = new System.Windows.Forms.SaveFileDialog())
                 {
@@ -182,12 +223,12 @@ namespace DonatelloAI.UI
                         var filepath = saveFileDialog.FileName;
                         await this.SaveModelAsync(modelUri, filepath);
                     }
-                }                
+                }
             }
 
-            this.openWindow = false;
+            this.loadingPanel.IsBusy = false;
         }
-        
+
         private async Task SaveModelAsync(string uri, string filepath)
         {
             using (HttpClient client = new HttpClient())

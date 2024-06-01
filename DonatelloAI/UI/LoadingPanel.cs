@@ -16,6 +16,12 @@ namespace DonatelloAI.UI
             modelCollectionManager.IsBusyChanged += (s,e) => this.isBusy = e;
         }
 
+        public bool IsBusy
+        {
+            get => this.isBusy;
+            set => this.isBusy = value;
+        }
+
         public void Show(ref ImGuiIO* io)
         {
             if (!this.isBusy)
