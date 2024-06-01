@@ -15,11 +15,13 @@ namespace DonatelloAI.UI
 
         private TaskManager taskManager = null;
         private ModelCollectionManager modelCollectionManager = null;
+        private UIBehavior uiBehavior;
 
-        public ModelContextMenu(TaskManager taskManager, ModelCollectionManager modelCollectionManager)
+        public ModelContextMenu(TaskManager taskManager, ModelCollectionManager modelCollectionManager, UIBehavior uiBehavior)
         {
             this.taskManager = taskManager;
             this.modelCollectionManager = modelCollectionManager;
+            this.uiBehavior = uiBehavior;
         }
 
         public unsafe void Show(ref ImGuiIO* io)
@@ -48,7 +50,7 @@ namespace DonatelloAI.UI
                 if (modelData != null)
                 {
                     ImguiNative.igSetNextWindowPos(this.contextMenuPosition, ImGuiCond.None, Vector2.Zero);
-                    ImguiNative.igSetNextWindowSize(new Vector2(125, 200), ImGuiCond.None);
+                    ImguiNative.igSetNextWindowSize(new Vector2(125, 220), ImGuiCond.None);
                     ImguiNative.igBegin("Context Menu", this.imguiBars.Pointer(), ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoMove);
 
                     try
@@ -124,6 +126,14 @@ namespace DonatelloAI.UI
                         if (ImguiNative.igMenuItem_Bool("Style - Voronoi", null, false, true))
                         {
                             this.taskManager.RequestStylization(TripoAI.TripoAIService.Styles.Voronoi);
+                            this.showContextMenu = false;
+                        }
+
+                        ImguiNative.igSeparator();
+
+                        if(ImguiNative.igMenuItem_Bool("Export", null, false, true))
+                        {
+                            this.uiBehavior.ShowConversionPanel(modelData);
                             this.showContextMenu = false;
                         }
                     }

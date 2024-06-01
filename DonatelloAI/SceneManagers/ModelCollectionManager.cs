@@ -1,5 +1,4 @@
 ﻿using DonatelloAI.Importers.GLB;
-using DonatelloAI.TripoAI;
 using Evergine.Components.Animation;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
@@ -9,9 +8,7 @@ using Evergine.Framework.Services;
 using Evergine.Mathematics;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -34,7 +31,6 @@ namespace DonatelloAI.SceneManagers
 
         private bool isBusy = false;
         private const string MODEL_FOLDER = "Models";
-        private const string TEMP_FOLDER = "Temp";
 
         public ModelData FindModelDataByCurrentSelectedEntity()
         {

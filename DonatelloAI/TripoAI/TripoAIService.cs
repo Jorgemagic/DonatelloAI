@@ -498,17 +498,17 @@ namespace DonatelloAI.TripoAI
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
             }
 
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
             parameters.Add("type", "convert_model");
             parameters.Add("format", format.ToString());
             parameters.Add("original_model_task_id", task_id);
-            parameters.Add("quad", quad ? "true" : "false");
-            parameters.Add("face_limit", face_limit.ToString());
-            parameters.Add("flatten_bottom", flatten_bottom ? "true" : "false");
-            parameters.Add("flatten_bottom_threshold", flatten_bottom_threshold.ToString());
-            parameters.Add("texture_size", texture_size.ToString());
+            parameters.Add("quad", quad);
+            parameters.Add("face_limit", face_limit);
+            parameters.Add("flatten_bottom", flatten_bottom);
+            parameters.Add("flatten_bottom_threshold", flatten_bottom_threshold);
+            parameters.Add("texture_size", texture_size);
             parameters.Add("texture_format", texture_format.ToString());
-            parameters.Add("pivot_to_center_bottom", pivot_to_center_bottom ? "true" : "false");
+            parameters.Add("pivot_to_center_bottom", pivot_to_center_bottom);
 
             string parametersJsonString = JsonConvert.SerializeObject(parameters);
 

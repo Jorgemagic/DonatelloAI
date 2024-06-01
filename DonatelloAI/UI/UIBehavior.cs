@@ -27,6 +27,7 @@ namespace DonatelloAI.UI
         private ModelContextMenu modelContextMenu;
         private TaskListPanel taskListPanel;
         private MenuBar menuBar;
+        private ConversionPanel conversionPanel;
 
         protected override void OnActivated()
         {
@@ -36,9 +37,10 @@ namespace DonatelloAI.UI
             this.imageToModelPanel = new ImageToModelPanel(imguiManager, modelCollectionManager);
             this.loadingPanel = new LoadingPanel(modelCollectionManager);
             this.infoDialog = new InfoDialog(this.taskManager);
-            this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager);
+            this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager, this);
             this.taskListPanel = new TaskListPanel(taskManager);
-            this.menuBar = new MenuBar(this);            
+            this.menuBar = new MenuBar(this);
+            this.conversionPanel = new ConversionPanel();
         }
 
         public bool ShowTextToModelPanel
@@ -57,7 +59,7 @@ namespace DonatelloAI.UI
         {
             get => this.taskListPanel.OpenWindow;
             set => taskListPanel.OpenWindow = value;
-        }
+        }        
 
         protected override void Update(TimeSpan gameTime)
         {            
@@ -92,6 +94,13 @@ namespace DonatelloAI.UI
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
             this.menuBar.Show(ref io);
+            this.conversionPanel.Show(ref io);
+        }
+
+        public void ShowConversionPanel(ModelData modelData)
+        {
+            this.conversionPanel.ModelData = modelData;
+            this.conversionPanel.OpenWindow = true;
         }
     }
 }
