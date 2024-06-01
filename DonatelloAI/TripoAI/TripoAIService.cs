@@ -1,5 +1,5 @@
-﻿using Evergine.Framework.Services;
-using DonatelloAI.Settings;
+﻿using DonatelloAI.Settings;
+using Evergine.Framework.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -7,13 +7,14 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
-using System.Net.Mime;
 
 namespace DonatelloAI.TripoAI
 {
     public class TripoAIService : Service
-    {        
+    {
+        /// <summary>
+        /// Available post-processing styles.
+        /// </summary>
         public enum Styles
         {
             Lego,
@@ -21,6 +22,9 @@ namespace DonatelloAI.TripoAI
             Voronoi,
         };
 
+        /// <summary>
+        /// Available animations
+        /// </summary>
         public enum Animations
         {
             Walk,
@@ -28,12 +32,40 @@ namespace DonatelloAI.TripoAI
             Dive,
         }
 
+        /// <summary>
+        ///  Conversion available formats
+        /// </summary>
+        public enum ModelFormat
+        {
+            GLTF,
+            USDZ,
+            FBX,
+            OBJ,
+            STL
+        }
+
+        /// <summary>
+        /// Diffuse color texture formats (default JPEG)
+        /// </summary>
+        public enum TextureFormat
+        {
+            BMP,
+            DPX,
+            HDR,
+            JPEG,
+            OPEN_EXR,
+            PNG,
+            TARGA,
+            TIFF,
+            WEBP
+        }
+
         private readonly string filePath = "appSettings.json";
 
         public string api_key;
 
         public TripoAIService()
-        {            
+        {
             if (File.Exists(filePath))
             {
                 using (var reader = new StreamReader(this.filePath))
@@ -43,14 +75,14 @@ namespace DonatelloAI.TripoAI
                     this.api_key = data.TripoAIApiKey;
                 }
             }
-        }  
-        
+        }
+
         public void SetApiKey(string key)
         {
             this.api_key = key;
             var apiSettings = new ApiSettings()
             {
-                 TripoAIApiKey = this.api_key,
+                TripoAIApiKey = this.api_key,
             };
 
             string json = JsonConvert.SerializeObject(apiSettings);
@@ -58,7 +90,7 @@ namespace DonatelloAI.TripoAI
         }
 
         public async Task<string> RequestADraftModel(string promptText, string negativePrompt = default)
-        {            
+        {
             if (string.IsNullOrEmpty(api_key))
             {
                 throw new Exception("You need to specify a valid TripoAI API_KEY");
@@ -121,8 +153,8 @@ namespace DonatelloAI.TripoAI
 
                 MultipartFormDataContent requestContent = new MultipartFormDataContent();
                 var imageData = await File.ReadAllBytesAsync(imagePath);
-                var imageContent = new ByteArrayContent(imageData);                
-                var imageName = Path.GetFileName(imagePath);                
+                var imageContent = new ByteArrayContent(imageData);
+                var imageName = Path.GetFileName(imagePath);
                 requestContent.Add(imageContent, "file", imageName);
 
                 try
@@ -263,50 +295,6 @@ namespace DonatelloAI.TripoAI
             return refineTaskId;
         }
 
-        public async Task<string> OldRequestAnimateModel(string task_id)
-        {
-            if (string.IsNullOrEmpty(api_key))
-            {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
-            }
-
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("type", "animate_model");
-            parameters.Add("original_model_task_id", task_id);
-
-            string parametersJsonString = JsonConvert.SerializeObject(parameters);
-
-            string animateTaskId = string.Empty;
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
-                string uri = "https://api.tripo3d.ai/v2/openapi/task";
-                StringContent jsonContent = new StringContent(parametersJsonString,
-                     Encoding.UTF8,
-                    "application/json");
-
-                try
-                {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
-                    {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            animateTaskId = tripoResponse.data.task_id;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                }
-            };
-
-            return animateTaskId;
-        }
-
         public async Task<string> RequestPreRigCheck(string task_id)
         {
             if (string.IsNullOrEmpty(api_key))
@@ -410,7 +398,7 @@ namespace DonatelloAI.TripoAI
 
             string animationString;
             switch (animation)
-            {                
+            {
                 case Animations.Run:
                     animationString = "preset:run";
                     break;
@@ -501,6 +489,58 @@ namespace DonatelloAI.TripoAI
             };
 
             return stylizationTaskId;
+        }
+
+        public async Task<string> RequestConversion(string task_id, ModelFormat format, bool quad = false, int face_limit = 10000, bool flatten_bottom = false, float flatten_bottom_threshold = 0.01f, int texture_size = 2048, TextureFormat texture_format = TextureFormat.JPEG, bool pivot_to_center_bottom = false)
+        {
+            if (string.IsNullOrEmpty(api_key))
+            {
+                throw new Exception("You need to specify a valid TripoAI API_KEY");
+            }
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            parameters.Add("type", "convert_model");
+            parameters.Add("format", format.ToString());
+            parameters.Add("original_model_task_id", task_id);
+            parameters.Add("quad", quad ? "true" : "false");
+            parameters.Add("face_limit", face_limit.ToString());
+            parameters.Add("flatten_bottom", flatten_bottom ? "true" : "false");
+            parameters.Add("flatten_bottom_threshold", flatten_bottom_threshold.ToString());
+            parameters.Add("texture_size", texture_size.ToString());
+            parameters.Add("texture_format", texture_format.ToString());
+            parameters.Add("pivot_to_center_bottom", pivot_to_center_bottom ? "true" : "false");
+
+            string parametersJsonString = JsonConvert.SerializeObject(parameters);
+
+            string conversionTaskId = string.Empty;
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", api_key);
+                string uri = "https://api.tripo3d.ai/v2/openapi/task";
+                StringContent jsonContent = new StringContent(parametersJsonString,
+                     Encoding.UTF8,
+                    "application/json");
+
+                try
+                {
+                    var result = await client.PostAsync(uri, jsonContent);
+                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    {
+                        var response = await result.Content.ReadAsStringAsync();
+                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                        if (tripoResponse != null)
+                        {
+                            conversionTaskId = tripoResponse.data.task_id;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
+            };
+
+            return conversionTaskId;
         }
     }
 }

@@ -35,7 +35,6 @@ namespace DonatelloAI.SceneManagers
         private bool isBusy = false;
         private const string MODEL_FOLDER = "Models";
         private const string TEMP_FOLDER = "Temp";
-        private const string FBX2GLB_Path = "FBX2glTF.exe";
 
         public ModelData FindModelDataByCurrentSelectedEntity()
         {
@@ -144,19 +143,6 @@ namespace DonatelloAI.SceneManagers
                     // Save file to disc
                     await this.DownloadFileTaskAsync(client, new Uri(url), filePath);
 
-                    // Extract files
-                    if (Path.GetExtension(filePath) == ".zip")
-                    {                        
-                        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-                        string outputPath = Path.Combine(TEMP_FOLDER, fileNameWithoutExt);
-                        ZipFile.ExtractToDirectory(filePath, outputPath);
-
-                        string fbxPath = Path.Combine(outputPath, "out.FBX");
-                        string glbPath = Path.Combine(MODEL_FOLDER, $"{Path.GetFileNameWithoutExtension(filePath)}.glb");
-                        await this.FBXtoGLB(fbxPath, glbPath);
-                        filePath = glbPath;
-                    }
-
                     // Read file
                     if (Path.GetExtension(filePath) == ".glb")
                     {
@@ -186,28 +172,6 @@ namespace DonatelloAI.SceneManagers
                     await s.CopyToAsync(fs);
                 }
             }
-        }
-
-        private Task<int> FBXtoGLB(string fbxPath, string glbPath)
-        {
-            var tcs = new TaskCompletionSource<int>();
-            string arguments = $"-b --anim-framerate bake30 -i {fbxPath} -o {glbPath}";
-
-            var process = new Process
-            {
-                StartInfo = { FileName = FBX2GLB_Path, Arguments = arguments },
-                EnableRaisingEvents = true,
-            };
-
-            process.Exited += (s, e) =>
-            {
-                tcs.SetResult(process.ExitCode);
-                process.Dispose();
-            };
-
-            process.Start();
-
-            return tcs.Task;
         }
     }
 }

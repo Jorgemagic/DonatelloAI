@@ -19,9 +19,6 @@
 	  <ProjectReference Include="..\DonatelloAI\DonatelloAI.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Update="FBX2glTF.exe">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </None>
 	  <None Update="spiderman.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
