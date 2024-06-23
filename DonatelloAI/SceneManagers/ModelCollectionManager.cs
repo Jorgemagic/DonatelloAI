@@ -1,4 +1,5 @@
-﻿using DonatelloAI.Importers.GLB;
+﻿using DonatelloAI.ImGui;
+using DonatelloAI.Importers.GLB;
 using Evergine.Components.Animation;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace DonatelloAI.SceneManagers
@@ -25,12 +27,44 @@ namespace DonatelloAI.SceneManagers
         [BindService]
         public ScreenContextManager screenContextManager = null;
 
-        private Dictionary<string, ModelData> collection = new Dictionary<string, ModelData>();
+        [BindSceneManager]
+        public CustomImGuiManager customImGuiManager = null;
+
+        public List<ModelData> Models = new List<ModelData>();
+        private Dictionary<string, int> collection = new Dictionary<string, int>();
 
         public Entity CurrentSelectedEntity = null;
 
         private bool isBusy = false;
         private const string MODEL_FOLDER = "Models";
+        private const string THUMBNAIL_FOLDER = "Thumbnail";
+        private const string JSON_COLLECTION = "modelCollection.json";
+
+        public ModelCollectionManager()
+        {
+            /*this.modelCollection.Add(new ModelData() { TaskId = "522351fa-3258-4df9-9484-073c7e247d73" });
+            this.modelCollection.Add(new ModelData() { TaskId = "47c2ead9-ec6a-4f69-97e8-d1170f0c8fdf" });
+            this.modelCollection.Add(new ModelData() { TaskId = "bc6322ec-6466-48d1-9a6c-b4faff273898" });
+            this.modelCollection.Add(new ModelData() { TaskId = "874b5f45-8534-43c8-85cf-1c166707525a" });*/
+        }
+
+        protected override async void OnLoaded()
+        {
+            if (File.Exists(JSON_COLLECTION))
+            {
+                var json = await File.ReadAllTextAsync(JSON_COLLECTION);
+                this.Models = JsonSerializer.Deserialize<List<ModelData>>(json);
+                foreach (var model in this.Models)
+                {
+                    var textureImage = await ImguiHelper.CreateTextureFromFile(model.Thumbnail);
+                    var thumbnail = this.customImGuiManager.CreateImGuiBinding(textureImage);
+                    model.ThumbnailTexture = textureImage;
+                    model.ThumbnailPointer = thumbnail;
+                }
+            }
+
+            base.OnLoaded();
+        }
 
         public ModelData FindModelDataByCurrentSelectedEntity()
         {
@@ -39,9 +73,9 @@ namespace DonatelloAI.SceneManagers
                 string tag = this.CurrentSelectedEntity.Tag;
                 if (!string.IsNullOrEmpty(tag))
                 {
-                    if (this.collection.TryGetValue(tag, out ModelData result))
+                    if (this.collection.TryGetValue(tag, out int index))
                     {
-                        return result;
+                        return this.Models[index];
                     }
                 }
             }
@@ -49,7 +83,7 @@ namespace DonatelloAI.SceneManagers
             return null;
         }
 
-        public void DownloadModel(string modelURL, string taskId, string entityTag = null)
+        public void DownloadModel(string modelURL, string taskId, string thumbnailURL, string entityTag = null)
         {
             if (this.isBusy) return;
 
@@ -64,20 +98,38 @@ namespace DonatelloAI.SceneManagers
                 {
                     ModelData modelData = new ModelData();
                     modelData.TaskId = taskId;
-                    this.collection.Add(result.fileName, modelData);
+
+                    string filePath = Path.Combine(THUMBNAIL_FOLDER, $"{result.fileName}.webp");
+
+                    var directory = Path.GetDirectoryName(filePath);
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    await ImguiHelper.DownloadThumbnailFromUrl(thumbnailURL, filePath);
+                    var textureImage = await ImguiHelper.CreateTextureFromFile(filePath);                    
+                    var thumbnail = this.customImGuiManager.CreateImGuiBinding(textureImage);
+                    modelData.Thumbnail = filePath;
+                    modelData.ThumbnailTexture = textureImage;
+                    modelData.ThumbnailPointer = thumbnail;
+                    this.Models.Add(modelData);
+                    this.collection.Add(result.fileName, this.Models.Count - 1);
+
+                    await this.SaveCollectionAsJsonFile();
                 }
 
                 var currentScene = screenContextManager.CurrentContext[0];
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
-                
+
                 // Remove previous model
                 /*var previous = this.Managers.EntityManager.FindAllByTag(result.fileName);
                 foreach ( var p in previous ) 
                 {
                     this.Managers.EntityManager.Remove(p);
                 }*/
-                
+
                 var root = new Entity() { Tag = result.fileName }
                                 .AddComponent(new Transform3D());
                 root.AddChild(entity);
@@ -107,17 +159,17 @@ namespace DonatelloAI.SceneManagers
         }
 
         private (string filePath, string fileName) GetFilePathFromUrl(string url, string modelName = null)
-        {            
+        {
             string fileNameWithExtension = Path.GetFileName(url);
             fileNameWithExtension = fileNameWithExtension.Substring(0, fileNameWithExtension.IndexOf("?"));
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileNameWithExtension);
 
             string fileName = modelName == null ? fileNameWithoutExtension : modelName;
-            string extension = Path.GetExtension(fileNameWithExtension);            
+            string extension = Path.GetExtension(fileNameWithExtension);
 
             string filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{extension}");
 
-            int index = 0;            
+            int index = 0;
             while (File.Exists(filePath))
             {
                 index++;
@@ -127,9 +179,9 @@ namespace DonatelloAI.SceneManagers
             return (filePath, $"{fileName}{index}");
         }
 
-        private async Task<Evergine.Framework.Graphics.Model> DownloadModelFromURL(string url, string filePath)
+        private async Task<Model> DownloadModelFromURL(string url, string filePath)
         {
-            Evergine.Framework.Graphics.Model result = null;
+            Model result = null;
             using (HttpClient client = new HttpClient())
             {
                 using (var response = await client.GetAsync(url))
@@ -168,6 +220,12 @@ namespace DonatelloAI.SceneManagers
                     await s.CopyToAsync(fs);
                 }
             }
+        }
+
+        private async Task SaveCollectionAsJsonFile()
+        {
+            var json = JsonSerializer.Serialize(this.Models);
+            await File.WriteAllTextAsync(JSON_COLLECTION, json);
         }
     }
 }

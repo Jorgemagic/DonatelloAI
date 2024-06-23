@@ -2,12 +2,14 @@
 using DonatelloAI.SceneManagers;
 using DonatelloAI.TripoAI;
 using Evergine.Bindings.Imgui;
+using Evergine.Common.Graphics;
 using Evergine.Framework;
 using Evergine.Mathematics;
 using Evergine.UI;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Schema;
 
 namespace DonatelloAI.UI
 {
@@ -27,6 +29,7 @@ namespace DonatelloAI.UI
         private TripoResponse tripoResponse;
 
         private bool openWindow = true;
+        private Texture textureImage;
 
         public bool OpenWindow
         {
@@ -100,7 +103,8 @@ namespace DonatelloAI.UI
                         {
                             var modelURL = this.tripoResponse.data.output.model;
                             var taskId = this.tripoResponse.data.task_id;
-                            this.modelCollectionManager.DownloadModel(modelURL, taskId);
+                            var thumbnailURL = this.tripoResponse.data.result.rendered_image.url;                            
+                            this.modelCollectionManager.DownloadModel(modelURL, taskId, thumbnailURL);
                             this.OpenWindow = false;
                         }
                     }
@@ -120,6 +124,12 @@ namespace DonatelloAI.UI
 
         private void ResetImage()
         {
+            // Removed the previous binding
+            if (this.textureImage != null)
+            {
+                this.imGuiManager.RemoveImGuiBinding(this.textureImage);
+            }
+            this.textureImage = null;
             this.image = ImguiHelper.SetNoPreviewImage(this.imGuiManager);
         }
 
@@ -138,7 +148,8 @@ namespace DonatelloAI.UI
                     // Request draft model
                     this.progress = 0;
                     this.msg = $"Starting the request ...";
-                    var taskId = await this.tripoAIService.RequestADraftModel(prompt);
+                    //var taskId = await this.tripoAIService.RequestADraftModel(prompt);
+                    var taskId = "f40671bc-6299-42b9-870f-ba8e95c590f4";
 
                     if (string.IsNullOrEmpty(taskId))
                     {
@@ -166,10 +177,10 @@ namespace DonatelloAI.UI
                         // View draft model result                
                         var imageUrl = this.tripoResponse.data.result.rendered_image.url;
 
-                        this.msg = $"Download image preview ...";
+                        this.msg = $"Download image preview ...";                       
 
-                        var textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);
-                        this.image = this.imGuiManager.CreateImGuiBinding(textureImage);
+                        this.textureImage = await ImguiHelper.DownloadTextureFromUrl(imageUrl);                       
+                        this.image = this.imGuiManager.CreateImGuiBinding(this.textureImage);
 
                         this.msg = $"Done!";
                     }

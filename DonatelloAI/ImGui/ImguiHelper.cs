@@ -14,14 +14,43 @@ namespace DonatelloAI.ImGui
     public static class ImguiHelper
     {
         private static GraphicsContext graphicsContext = null;
-        private static IntPtr previewPlaceholderPointer = IntPtr.Zero;        
+        private static IntPtr previewPlaceholderPointer = IntPtr.Zero;    
+        
+        public static async Task DownloadThumbnailFromUrl(string url, string filePath)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                using (var response = await client.GetAsync(url))
+                {
+                    response.EnsureSuccessStatusCode();
+
+                    using (var s = await response.Content.ReadAsStreamAsync())
+                    using (var fs = new FileStream(filePath, FileMode.CreateNew))
+                    {
+                        await s.CopyToAsync(fs);
+                        s.Flush();
+                    }
+                }
+            }
+        }
+
+        public static async Task<Texture> CreateTextureFromFile(string filePath)
+        {
+            Texture result = null;
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                result = await GenerateTexture(stream);                
+            }
+
+            return result;
+        }
 
         public static async Task<Texture> DownloadTextureFromUrl(string url)
         {
             Texture result = null;
-            using (HttpClient cliente = new HttpClient())
+            using (HttpClient client = new HttpClient())
             {
-                using (var response = await cliente.GetAsync(url))
+                using (var response = await client.GetAsync(url))
                 {
                     response.EnsureSuccessStatusCode();
 
@@ -95,6 +124,6 @@ namespace DonatelloAI.ImGui
             }
 
             return previewPlaceholderPointer;            
-        }
+        }        
     }
 }

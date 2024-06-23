@@ -69,7 +69,8 @@ namespace DonatelloAI.SceneManagers
 
                         var modelURL = tripoResponse.data.output.model;
                         var taskID = refineTaskId;
-                        this.modelCollectionManager.DownloadModel(modelURL, refineTaskId, entityTag + "_refined");
+                        var thumbnailURL = tripoResponse.data.result.rendered_image.url;
+                        this.modelCollectionManager.DownloadModel(modelURL, refineTaskId, thumbnailURL, entityTag + "_refined");
                     }
                 }
             });
@@ -250,7 +251,8 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.msg = $"status:{status}";
 
                         var modelURL = tripoResponse.data.output.model;
-                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, entityTag + "_animated");
+                        var thumbnailURL = tripoResponse.data.result.rendered_image.url;
+                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, thumbnailURL, entityTag + "_animated");
                     }
                 }
             });
@@ -318,7 +320,8 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.msg = $"status:{status}";
 
                         var modelURL = tripoResponse.data.output.model;
-                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, entityTag + $"_{style}");
+                        var thumbnailURL = tripoResponse.data.result.rendered_image.url;
+                        this.modelCollectionManager.DownloadModel(modelURL, string.Empty, thumbnailURL, entityTag + $"_{style}");
                     }
                 }
             });

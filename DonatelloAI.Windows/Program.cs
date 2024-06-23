@@ -11,8 +11,8 @@ namespace DonatelloAI.Windows
 {    
     class Program
     {
-        static uint width = 1280;
-        static uint height = 720;
+        static uint width = 1980;
+        static uint height = 1080;
         static bool Windowed = true;
         static bool VSync = true;
 

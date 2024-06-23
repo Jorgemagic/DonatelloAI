@@ -27,6 +27,7 @@ namespace DonatelloAI.UI
         private InfoDialog infoDialog;
         private ModelContextMenu modelContextMenu;
         private TaskListPanel taskListPanel;
+        private GalleryPanel galleryPanel;
         private MenuBar menuBar;
         private ConversionPanel conversionPanel;
 
@@ -40,6 +41,7 @@ namespace DonatelloAI.UI
             this.infoDialog = new InfoDialog(this.taskManager);
             this.modelContextMenu = new ModelContextMenu(taskManager, modelCollectionManager, this);
             this.taskListPanel = new TaskListPanel(taskManager);
+            this.galleryPanel = new GalleryPanel(modelCollectionManager);
             this.menuBar = new MenuBar(this);
             this.conversionPanel = new ConversionPanel(this.loadingPanel);
         }
@@ -60,6 +62,12 @@ namespace DonatelloAI.UI
         {
             get => this.taskListPanel.OpenWindow;
             set => taskListPanel.OpenWindow = value;
+        }
+
+        public bool ShowGalleryPanel
+        {
+            get => this.galleryPanel.OpenWindow;
+            set => galleryPanel.OpenWindow = value;
         }
 
         protected override void Update(TimeSpan gameTime)
@@ -92,6 +100,7 @@ namespace DonatelloAI.UI
             this.infoDialog.Show(ref io);
             this.modelContextMenu.Show(ref io);
             this.taskListPanel.Show(ref io);
+            this.galleryPanel.Show(ref io);
             this.menuBar.Show(ref io);
             this.conversionPanel.Show(ref io);
         }

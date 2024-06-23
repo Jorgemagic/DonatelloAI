@@ -59,6 +59,11 @@ namespace DonatelloAI.UI
                         this.uiBehavior.ShowTaskListPanel = true;
                     }
 
+                    if (ImguiNative.igMenuItem_Bool("Gallery", null, false, true))
+                    {
+                        this.uiBehavior.ShowGalleryPanel = true;
+                    }
+
                     ImguiNative.igEndMenu();
                 }
 
