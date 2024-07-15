@@ -3,6 +3,7 @@ using DonatelloAI.SceneManagers;
 using Evergine.Bindings.Imgui;
 using Evergine.Mathematics;
 using Evergine.UI;
+using System.Threading.Tasks;
 
 namespace DonatelloAI.UI
 {
@@ -24,7 +25,7 @@ namespace DonatelloAI.UI
             {
                 int thumbnailWidth = 100;
                 int windowsWidth = 220;
-                ImguiNative.igSetNextWindowPos(new Vector2(8, 27), ImGuiCond.Appearing, Vector2.Zero);
+                ImguiNative.igSetNextWindowPos(new Vector2(8, 127), ImGuiCond.Appearing, Vector2.Zero);
                 ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, 600), ImGuiCond.Appearing);
                 ImguiNative.igBegin("Gallery", this.OpenWindow.Pointer(), ImGuiWindowFlags.None);
 
@@ -44,39 +45,25 @@ namespace DonatelloAI.UI
                                 var model = models[index];
                                 
                                 if (j != 0) ImguiNative.igSameLine(0, 4);
-                                ImguiNative.igImageButton(model.ThumbnailPointer, new Vector2(100), Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One);
+                                if (ImguiNative.igImageButton(model.ThumbnailPointer, new Vector2(100), Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One))
+                                {
+                                    this.LoadModelFromGallery(model);
+                                }
                             }
                         }
                     }
-
-                    /*ImguiNative.igBeginTable("##Models", 2, ImGuiTableFlags.None, Vector2.Zero, 0);
-                    int textColumnWidth = 200;
-                    ImguiNative.igTableSetupColumn("##AAA", ImGuiTableColumnFlags.WidthFixed, textColumnWidth, 0);
-
-                    int imagesPerRow = windowsWidth / thumbnailWidth;                    
-                    for (int i = 0; i <= models.Length / imagesPerRow; i++)
-                    {
-                        ImguiNative.igTableNextRow(ImGuiTableRowFlags.None, 20);
-
-                        for (int j = 0; j < imagesPerRow; j++)
-                        {
-                            int index = i * imagesPerRow + j;
-                            if (models.Length > index)
-                            {
-                                var model = models[index];
-
-                                ImguiNative.igTableNextColumn();
-                                ImguiNative.igText($"{model.TaskId}");
-                                ImguiNative.igImageButton(System.IntPtr.Zero, new Vector2(100), Vector2.Zero, Vector2.One, 0, Vector4.Zero, Vector4.One);
-                            }
-                        }
-                    }
-
-                    ImguiNative.igEndTable();*/
                 }
 
                 ImguiNative.igEnd();
-            }
+            }            
+        }
+
+        private void LoadModelFromGallery(ModelData modelData)
+        {
+            Task.Run(async () =>
+            {
+                await this.modelCollectionManager.LoadModel(modelData);
+            });
         }
     }
 }

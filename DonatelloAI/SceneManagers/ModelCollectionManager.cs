@@ -39,14 +39,6 @@ namespace DonatelloAI.SceneManagers
         private const string THUMBNAIL_FOLDER = "Thumbnail";
         private const string JSON_COLLECTION = "modelCollection.json";
 
-        public ModelCollectionManager()
-        {
-            /*this.modelCollection.Add(new ModelData() { TaskId = "522351fa-3258-4df9-9484-073c7e247d73" });
-            this.modelCollection.Add(new ModelData() { TaskId = "47c2ead9-ec6a-4f69-97e8-d1170f0c8fdf" });
-            this.modelCollection.Add(new ModelData() { TaskId = "bc6322ec-6466-48d1-9a6c-b4faff273898" });
-            this.modelCollection.Add(new ModelData() { TaskId = "874b5f45-8534-43c8-85cf-1c166707525a" });*/
-        }
-
         protected override async void OnLoaded()
         {
             if (File.Exists(JSON_COLLECTION))
@@ -97,6 +89,8 @@ namespace DonatelloAI.SceneManagers
                 {
                     ModelData modelData = new ModelData();
                     modelData.TaskId = taskId;
+                    modelData.EntityName = result.fileName;
+                    modelData.ModelFilePath = result.filePath;
 
                     string filePath = Path.Combine(THUMBNAIL_FOLDER, $"{result.fileName}.webp");
 
@@ -107,11 +101,11 @@ namespace DonatelloAI.SceneManagers
                     }
 
                     await ImguiHelper.DownloadThumbnailFromUrl(thumbnailURL, filePath);
-                    var textureImage = await ImguiHelper.CreateTextureFromFile(filePath);                    
+                    var textureImage = await ImguiHelper.CreateTextureFromFile(filePath);
                     var thumbnail = this.customImGuiManager.CreateImGuiBinding(textureImage);
                     modelData.Thumbnail = filePath;
                     modelData.ThumbnailTexture = textureImage;
-                    modelData.ThumbnailPointer = thumbnail;
+                    modelData.ThumbnailPointer = thumbnail;                    
                     this.Models.Add(modelData);
                     this.collection.Add(result.fileName, this.Models.Count - 1);
 
@@ -121,13 +115,6 @@ namespace DonatelloAI.SceneManagers
                 var currentScene = screenContextManager.CurrentContext[0];
 
                 var entity = model.InstantiateModelHierarchy(this.assetsService);
-
-                // Remove previous model
-                /*var previous = this.Managers.EntityManager.FindAllByTag(result.fileName);
-                foreach ( var p in previous ) 
-                {
-                    this.Managers.EntityManager.Remove(p);
-                }*/
 
                 var root = new Entity() { Tag = result.fileName }
                                 .AddComponent(new Transform3D());
@@ -172,10 +159,10 @@ namespace DonatelloAI.SceneManagers
             while (File.Exists(filePath))
             {
                 index++;
-                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}{index}{extension}");
+                filePath = Path.Combine(MODEL_FOLDER, $"{fileName}_{index}{extension}");
             }
 
-            return (filePath, $"{fileName}{index}");
+            return (filePath, $"{fileName}_{index}");
         }
 
         private async Task<Model> DownloadModelFromURL(string url, string filePath)
@@ -191,13 +178,13 @@ namespace DonatelloAI.SceneManagers
                     await this.DownloadFileTaskAsync(client, new Uri(url), filePath);
 
                     // Read file
-                    if (Path.GetExtension(filePath) == ".glb")
+                    //if (Path.GetExtension(filePath) == ".glb")
+                    //{
+                    using (var fileStream = new FileStream(filePath, FileMode.Open))
                     {
-                        using (var fileStream = new FileStream(filePath, FileMode.Open))
-                        {
-                            result = await Evergine.Runtimes.GLB.GLBRuntime.Instance.Read(fileStream);
-                        }
+                        result = await Evergine.Runtimes.GLB.GLBRuntime.Instance.Read(fileStream);
                     }
+                    //}
                 }
             }
 
@@ -219,6 +206,57 @@ namespace DonatelloAI.SceneManagers
                     await s.CopyToAsync(fs);
                 }
             }
+        }
+
+        public async Task LoadModel(ModelData data)
+        {
+            this.IsBusyChanged?.Invoke(this, true);            
+
+            Model model = null;
+            using (var fileStream = new FileStream(data.ModelFilePath, FileMode.Open))
+            {
+                model = await Evergine.Runtimes.GLB.GLBRuntime.Instance.Read(fileStream);
+            }
+
+            var currentScene = screenContextManager.CurrentContext[0];
+
+            var entity = model.InstantiateModelHierarchy(this.assetsService);
+
+            var tag = data.EntityName;
+            if (!this.collection.TryGetValue(tag, out _))
+            {
+                var modelIndex = this.Models.FindIndex(m => m.EntityName == data.EntityName);
+                if (modelIndex != -1)
+                {
+                    this.collection.Add(tag, modelIndex);
+                }
+            }
+
+            var root = new Entity() { Tag = tag }
+                            .AddComponent(new Transform3D());
+            root.AddChild(entity);
+
+            var boundingBox = model.BoundingBox.Value;
+            boundingBox.Transform(entity.FindComponent<Transform3D>().WorldTransform);
+            root.FindComponent<Transform3D>().Scale = Vector3.One * (1.0f / boundingBox.HalfExtent.Length());
+            root.AddComponent(new BoxCollider3D()
+            {
+                Size = boundingBox.HalfExtent * 2,
+                Offset = boundingBox.Center,
+            });
+            root.AddComponent(new StaticBody3D());
+
+            // Animated models
+            var animate3D = entity.FindComponentInChildren<Animation3D>();
+            if (animate3D != null && animate3D.AnimationNames.Count() > 0)
+            {
+                animate3D.CurrentAnimation = animate3D.AnimationNames.First();
+                animate3D.PlayAutomatically = true;
+            }
+
+            currentScene.Managers.EntityManager.Add(root);
+
+            this.IsBusyChanged?.Invoke(this, false);
         }
 
         private async Task SaveCollectionAsJsonFile()

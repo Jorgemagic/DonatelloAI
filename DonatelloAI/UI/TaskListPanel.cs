@@ -43,18 +43,6 @@ namespace DonatelloAI.UI
                         ImguiNative.igProgressBar(task.progress / 100.0f, new Vector2(windowsWidth - textColumnWidth - 25, 19), task.msg);
                     }
 
-                    /*ImguiNative.igTableNextRow(ImGuiTableRowFlags.None, 20);
-                    ImguiNative.igTableNextColumn();
-                    ImguiNative.igText($"M:Test T:Refine");
-                    ImguiNative.igTableNextColumn();
-                    ImguiNative.igProgressBar(0.9f, new Vector2(windowsWidth - textColumnWidth - 25, 19), null);
-
-                    ImguiNative.igTableNextRow(ImGuiTableRowFlags.None, 20);
-                    ImguiNative.igTableNextColumn();
-                    ImguiNative.igText($"M:a small cat T:Animate");
-                    ImguiNative.igTableNextColumn();
-                    ImguiNative.igProgressBar(1.0f, new Vector2(windowsWidth - textColumnWidth - 25, 19), null);*/
-
                     ImguiNative.igEndTable();
                 }
 
