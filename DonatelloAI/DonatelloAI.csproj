@@ -1,25 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFramework>net6.0-windows</TargetFramework>
-		<GenerateEvergineContent>True</GenerateEvergineContent>
-		<GenerateEvergineAssets>False</GenerateEvergineAssets>
-		<GenerateEvergineScenesCode>True</GenerateEvergineScenesCode>
-		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-		<UseWindowsForms>True</UseWindowsForms>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="Evergine.Common" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Components" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Framework" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Mathematics" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Platform" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Bullet" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.Targets" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.CodeScenes" Version="2023.9.28.1837" />
-		<PackageReference Include="Evergine.ImGui" Version="2023.9.28.1837" />
-		<PackageReference Include="glTF2Loader" Version="1.1.4-alpha" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.8" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="Evergine.Bindings.Draco" Version="2024.4.25.2" />
-	</ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <GenerateEvergineContent>True</GenerateEvergineContent>
+    <GenerateEvergineAssets>False</GenerateEvergineAssets>
+    <GenerateEvergineScenesCode>True</GenerateEvergineScenesCode>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <UseWindowsForms>True</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Evergine.Common" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Components" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Framework" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Mathematics" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Platform" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Bullet" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.Targets" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.CodeScenes" Version="2024.6.28.320" />
+    <PackageReference Include="Evergine.ImGui" Version="2024.6.28.320" />
+    <PackageReference Include="glTF2Loader" Version="1.1.4-alpha" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.8" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Evergine.Bindings.Draco" Version="2024.4.25.2" />
+  </ItemGroup>
 </Project>
