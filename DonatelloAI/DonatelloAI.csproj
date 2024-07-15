@@ -18,8 +18,8 @@
     <PackageReference Include="Evergine.CodeScenes" Version="2024.6.28.320" />
     <PackageReference Include="Evergine.ImGui" Version="2024.6.28.320" />
     <PackageReference Include="glTF2Loader" Version="1.1.4-alpha" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.8" />
+	<PackageReference Include="SkiaSharp" Version="2.88.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Evergine.Bindings.Draco" Version="2024.4.25.2" />
+	<PackageReference Include="Evergine.Runtimes.GLB" Version="2024.6.28.320" />
   </ItemGroup>
 </Project>

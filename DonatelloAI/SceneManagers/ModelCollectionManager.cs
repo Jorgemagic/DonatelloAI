@@ -1,5 +1,4 @@
 ﻿using DonatelloAI.ImGui;
-using DonatelloAI.Importers.GLB;
 using Evergine.Components.Animation;
 using Evergine.Framework;
 using Evergine.Framework.Graphics;
@@ -196,7 +195,7 @@ namespace DonatelloAI.SceneManagers
                     {
                         using (var fileStream = new FileStream(filePath, FileMode.Open))
                         {
-                            result = await GLBRuntime.Instance.Read(fileStream);
+                            result = await Evergine.Runtimes.GLB.GLBRuntime.Instance.Read(fileStream);
                         }
                     }
                 }
