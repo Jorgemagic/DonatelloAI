@@ -1,5 +1,7 @@
 ﻿using DonatelloAI.SceneManagers;
+using DonatelloAI.TripoAI;
 using Evergine.Bindings.Imgui;
+using Evergine.Framework;
 using Evergine.Mathematics;
 using Evergine.UI;
 
@@ -7,6 +9,8 @@ namespace DonatelloAI.UI
 {
     public class InfoDialog
     {
+        private TripoAIService tripoAIService;
+
         private bool showDialog = false;
 
         public bool ShowDialog
@@ -19,11 +23,15 @@ namespace DonatelloAI.UI
 
         public InfoDialog(TaskManager taskManager)
         {
-            taskManager.InfoEvent += (s, m) =>
-            {
-                this.showDialog = true;
-                this.Message = m;
-            };
+            this.tripoAIService = Application.Current.Container.Resolve<TripoAIService>();
+            this.tripoAIService.InfoEvent += this.ShowInfoEvent;
+            taskManager.InfoEvent += this.ShowInfoEvent;
+        }
+
+        private void ShowInfoEvent(object sender, string message)
+        {
+            this.showDialog = true;
+            this.Message = message;
         }
 
         public unsafe void Show(ref ImGuiIO* io)

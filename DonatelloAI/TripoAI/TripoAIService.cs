@@ -12,6 +12,8 @@ namespace DonatelloAI.TripoAI
 {
     public class TripoAIService : Service
     {
+        public event EventHandler<string> InfoEvent;
+
         /// <summary>
         /// Available post-processing styles.
         /// </summary>
@@ -93,7 +95,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             string taskID = string.Empty;
@@ -115,22 +118,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            taskID = tripoResponse.data.task_id;
-                        }
+                        taskID = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -141,7 +148,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             string imageToken = string.Empty;
@@ -157,22 +165,26 @@ namespace DonatelloAI.TripoAI
                 var imageName = Path.GetFileName(imagePath);
                 requestContent.Add(imageContent, "file", imageName);
 
-                try
+                var result = await client.PostAsync(uri, requestContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, requestContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<UploadResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<UploadResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            imageToken = tripoResponse.data.image_token;
-                        }
+                        imageToken = tripoResponse.data.image_token;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -183,7 +195,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             string taskID = string.Empty;
@@ -206,22 +219,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            taskID = tripoResponse.data.task_id;
-                        }
+                        taskID = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -232,7 +249,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             TripoResponse tripoResponse = null;
@@ -255,7 +273,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -273,22 +292,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            refineTaskId = tripoResponse.data.task_id;
-                        }
+                        refineTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -299,7 +322,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -317,22 +341,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            preRigCheckTaskId = tripoResponse.data.task_id;
-                        }
+                        preRigCheckTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -343,7 +371,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -362,22 +391,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            rigTaskId = tripoResponse.data.task_id;
-                        }
+                        rigTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -388,7 +421,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -424,22 +458,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            retargetTaskId = tripoResponse.data.task_id;
-                        }
+                        retargetTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -450,7 +488,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -469,22 +508,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            stylizationTaskId = tripoResponse.data.task_id;
-                        }
+                        stylizationTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 
@@ -495,7 +538,8 @@ namespace DonatelloAI.TripoAI
         {
             if (string.IsNullOrEmpty(api_key))
             {
-                throw new Exception("You need to specify a valid TripoAI API_KEY");
+                this.InfoEvent?.Invoke(this, "You need to specify a valid TripoAI API_KEY");
+                return null;
             }
 
             Dictionary<string, object> parameters = new Dictionary<string, object>();
@@ -521,22 +565,26 @@ namespace DonatelloAI.TripoAI
                      Encoding.UTF8,
                     "application/json");
 
-                try
+                var result = await client.PostAsync(uri, jsonContent);
+                if (result.IsSuccessStatusCode)
                 {
-                    var result = await client.PostAsync(uri, jsonContent);
-                    if (result.EnsureSuccessStatusCode().IsSuccessStatusCode)
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
+                    if (tripoResponse != null)
                     {
-                        var response = await result.Content.ReadAsStringAsync();
-                        var tripoResponse = JsonConvert.DeserializeObject<TripoResponse>(response);
-                        if (tripoResponse != null)
-                        {
-                            conversionTaskId = tripoResponse.data.task_id;
-                        }
+                        conversionTaskId = tripoResponse.data.task_id;
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Console.WriteLine(ex.ToString());
+                    var response = await result.Content.ReadAsStringAsync();
+                    var tripoResponse = JsonConvert.DeserializeObject<TripoErrorResponse>(response);
+                    if (tripoResponse != null)
+                    {
+                        this.InfoEvent?.Invoke(this, $"Error Message: {tripoResponse.message}. \n\nSuggestion: {tripoResponse.suggestion}.");
+                    }
+
+                    return null;
                 }
             };
 

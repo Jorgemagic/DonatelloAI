@@ -320,7 +320,7 @@ namespace DonatelloAI.SceneManagers
                         taskStatus.msg = $"status:{status}";
 
                         var modelURL = tripoResponse.data.output.model;
-                        var thumbnailURL = tripoResponse.data.result.rendered_image.url;
+                        var thumbnailURL = tripoResponse.data.result.rendered_image?.url;
                         this.modelCollectionManager.DownloadModel(modelURL, string.Empty, thumbnailURL, entityTag + $"_{style}");
                     }
                 }

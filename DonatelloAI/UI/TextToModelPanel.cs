@@ -88,13 +88,20 @@ namespace DonatelloAI.UI
                     if (ImguiNative.igButton("Create", buttonSize))
                     {
                         string prompt = Encoding.UTF8.GetString(promptBuffer, promptTextBuffer.Length);
-                        var index = prompt.IndexOf('\0');
-                        if (index >= 0)
+                        var p_index = prompt.IndexOf('\0');
+                        if (p_index >= 0)
                         {
-                            prompt = prompt.Substring(0, index);
+                            prompt = prompt.Substring(0, p_index);
                         }
 
-                        this.RequestDraftModel(prompt);
+                        string negative = Encoding.UTF8.GetString(negativeBuffer, negativeTextBuffer.Length);
+                        var n_index = negative.IndexOf('\0');
+                        if (n_index >= 0)
+                        {
+                            negative = negative.Substring(0, n_index);
+                        }
+
+                        this.RequestDraftModel(prompt, negative);
                     }
                     
                     if (this.image != IntPtr.Zero)
@@ -133,7 +140,7 @@ namespace DonatelloAI.UI
             this.image = ImguiHelper.SetNoPreviewImage(this.imGuiManager);
         }
 
-        private void RequestDraftModel(string prompt)
+        private void RequestDraftModel(string prompt, string negative)
         {
             this.ResetImage();
 
@@ -148,8 +155,8 @@ namespace DonatelloAI.UI
                     // Request draft model
                     this.progress = 0;
                     this.msg = $"Starting the request ...";
-                    //var taskId = await this.tripoAIService.RequestADraftModel(prompt);
-                    var taskId = "f40671bc-6299-42b9-870f-ba8e95c590f4";
+                    var taskId = await this.tripoAIService.RequestADraftModel(prompt, negative);
+                    ////var taskId = "f40671bc-6299-42b9-870f-ba8e95c590f4";
 
                     if (string.IsNullOrEmpty(taskId))
                     {

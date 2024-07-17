@@ -52,4 +52,11 @@
         public string type { get; set; }
         public string url { get; set; }
     }
+
+    public class TripoErrorResponse
+    {
+        public int code { get; set; }
+        public string message { get; set; }
+        public string suggestion { get; set; }
+    }
 }
