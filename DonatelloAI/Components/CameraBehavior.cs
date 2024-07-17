@@ -309,25 +309,7 @@ namespace DonatelloAI.Components
             else if (keyboardDispatcher.IsKeyDown(Keys.E))
             {
                 this.moveStruct.moveDown = currentSpeed;
-            }
-
-            if (keyboardDispatcher.IsKeyDown(Keys.Up))
-            {
-                this.moveStruct.pitch = currentSpeed;
-            }
-            else if (keyboardDispatcher.IsKeyDown(Keys.Down))
-            {
-                this.moveStruct.pitch = -currentSpeed;
-            }
-
-            if (keyboardDispatcher.IsKeyDown(Keys.Left))
-            {
-                this.moveStruct.yaw = currentSpeed;
-            }
-            else if (keyboardDispatcher.IsKeyDown(Keys.Right))
-            {
-                this.moveStruct.yaw = -currentSpeed;
-            }
+            }            
         }
 
         /// <summary>

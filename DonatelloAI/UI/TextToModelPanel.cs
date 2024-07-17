@@ -125,7 +125,8 @@ namespace DonatelloAI.UI
         {
             this.progress = 0;
             this.msg = string.Empty;
-            this.promptTextBuffer = new byte[256];
+            this.promptTextBuffer = new byte[1024];
+            this.negativeTextBuffer = new byte[1024];
             this.ResetImage();
         }
 
