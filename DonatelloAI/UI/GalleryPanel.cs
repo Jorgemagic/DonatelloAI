@@ -34,7 +34,7 @@ namespace DonatelloAI.UI
                 
                 if (models.Count > 0)
                 {
-
+                    windowsWidth = (int)ImguiNative.igGetWindowWidth();
                     int imagesPerRow = windowsWidth / thumbnailWidth;
                     for (int i = 0; i <= models.Count / imagesPerRow; i++)
                     {
