@@ -26,8 +26,9 @@ namespace DonatelloAI.UI
             {
                 int thumbnailWidth = 100;
                 int windowsWidth = 220;
-                ImguiNative.igSetNextWindowPos(new Vector2(8, 127), ImGuiCond.Appearing, Vector2.Zero);
-                ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, 600), ImGuiCond.Appearing);
+                int windowsHeight = 660;
+                ImguiNative.igSetNextWindowPos(new Vector2(8, io->DisplaySize.Y * 0.5f), ImGuiCond.Appearing, new Vector2(0,0.5f));
+                ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, windowsHeight), ImGuiCond.Appearing);
                 ImguiNative.igBegin("Gallery", this.OpenWindow.Pointer(), ImGuiWindowFlags.None);
 
                 var models = this.modelCollectionManager.Models;

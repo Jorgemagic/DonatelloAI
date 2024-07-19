@@ -82,7 +82,7 @@ namespace DonatelloAI.UI
             var camera = this.Managers.RenderManager.ActiveCamera3D;
             Matrix4x4 view = camera.View;
             const int side = 128;
-            ImguizmoNative.ImGuizmo_ViewManipulate(&view.M11, 2, Vector2.Zero, Vector2.One * side, (uint)Color.Transparent.ToInt());
+            ImguizmoNative.ImGuizmo_ViewManipulate(&view.M11, 2, new Vector2(io->DisplaySize.X - side, 8), Vector2.One * side, (uint)Color.Transparent.ToInt());
             Matrix4x4.Invert(ref view, out Matrix4x4 iview);
             var translation = iview.Translation;
             var rotation = iview.Rotation;
