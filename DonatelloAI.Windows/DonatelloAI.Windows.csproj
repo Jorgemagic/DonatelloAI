@@ -5,6 +5,9 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="appicon.ico" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Evergine.DirectX11" Version="2024.6.28.320" />
     <PackageReference Include="Evergine.HLSLEverywhere" Version="2024.6.28.320" />
     <PackageReference Include="Evergine.XAudio2" Version="2024.6.28.320" />
@@ -14,6 +17,9 @@
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('EVERGINE_EDITOR'))">
     <ProjectReference Include="..\NetTripoAI.Editor\NetTripoAI.Editor.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="appicon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DonatelloAI\DonatelloAI.csproj" />

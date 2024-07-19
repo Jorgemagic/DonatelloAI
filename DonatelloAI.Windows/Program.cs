@@ -6,6 +6,8 @@ using Evergine.Framework.Services;
 using Evergine.Platform;
 using System;
 using System.Diagnostics;
+using System.Drawing;
+using System.Reflection;
 
 namespace DonatelloAI.Windows
 {    
@@ -51,6 +53,8 @@ namespace DonatelloAI.Windows
             WindowsSystem windowsSystem = new Evergine.Forms.FormsWindowsSystem();
             application.Container.RegisterInstance(windowsSystem);
             var window = windowsSystem.CreateWindow("Donatello AI", width, height);
+            var assembly = Assembly.GetExecutingAssembly();
+            (window as Evergine.Forms.FormsWindow).NativeWindow.Icon = new Icon(assembly.GetManifestResourceStream("DonatelloAI.Windows.appicon.ico"));
 
             ConfigureGraphicsContext(application, window);
 
