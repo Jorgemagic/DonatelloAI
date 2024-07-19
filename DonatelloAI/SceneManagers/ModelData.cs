@@ -18,6 +18,8 @@ namespace DonatelloAI.SceneManagers
 
         public string ModelFilePath { get; set; }
 
+        public string Prompt { get; set; }
+
         [JsonIgnore]
         public Texture ThumbnailTexture { get; set; }
 

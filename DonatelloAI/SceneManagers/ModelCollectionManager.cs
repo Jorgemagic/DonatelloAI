@@ -74,7 +74,7 @@ namespace DonatelloAI.SceneManagers
             return null;
         }
 
-        public void DownloadModel(string modelURL, string taskId, string thumbnailURL, string entityTag = null)
+        public void DownloadModel(string modelURL, string taskId, string thumbnailURL, string prompt, string entityTag = null)
         {
             if (this.isBusy) return;
 
@@ -91,6 +91,7 @@ namespace DonatelloAI.SceneManagers
                     modelData.TaskId = taskId;
                     modelData.EntityName = result.fileName;
                     modelData.ModelFilePath = result.filePath;
+                    modelData.Prompt = prompt;
 
                     string filePath = Path.Combine(THUMBNAIL_FOLDER, $"{result.fileName}.webp");
 

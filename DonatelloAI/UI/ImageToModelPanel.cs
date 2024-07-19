@@ -90,7 +90,7 @@ namespace DonatelloAI.UI
                             var modelURL = tripoResponse.data.output.model;
                             var taskID = this.tripoResponse.data.task_id;
                             var thumbnailURL = this.tripoResponse.data.result.rendered_image.url;
-                            this.modelCollectionManager.DownloadModel(modelURL, taskID, thumbnailURL);
+                            this.modelCollectionManager.DownloadModel(modelURL, taskID, thumbnailURL, "From Image");
                             this.OpenWindow = false;
                         }
                     }

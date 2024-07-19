@@ -29,7 +29,7 @@ namespace DonatelloAI.UI
         private TripoResponse tripoResponse;
 
         private bool openWindow = true;
-        private Texture textureImage;
+        private Texture textureImage;        
 
         public bool OpenWindow
         {
@@ -110,8 +110,9 @@ namespace DonatelloAI.UI
                         {
                             var modelURL = this.tripoResponse.data.output.model;
                             var taskId = this.tripoResponse.data.task_id;
-                            var thumbnailURL = this.tripoResponse.data.result.rendered_image.url;                            
-                            this.modelCollectionManager.DownloadModel(modelURL, taskId, thumbnailURL);
+                            var thumbnailURL = this.tripoResponse.data.result.rendered_image.url;
+                            var prompt = this.tripoResponse.data.prompt;
+                            this.modelCollectionManager.DownloadModel(modelURL, taskId, thumbnailURL, prompt);
                             this.OpenWindow = false;
                         }
                     }
