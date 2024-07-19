@@ -101,6 +101,8 @@ namespace DonatelloAI.Components
                     if (keyboardDispatcher?.ReadKeyState(Keys.Delete) == ButtonState.Pressing)
                     {
                         Managers.EntityManager.Remove(this.modelCollectionManager.CurrentSelectedEntity);
+                        transform = null;
+                        return;
                     }
 
                     var io = ImguiNative.igGetIO();

@@ -1,6 +1,7 @@
 ﻿using DonatelloAI.ImGui;
 using DonatelloAI.SceneManagers;
 using Evergine.Bindings.Imgui;
+using Evergine.Framework.Threading;
 using Evergine.Mathematics;
 using Evergine.UI;
 using System.Threading.Tasks;
@@ -60,7 +61,7 @@ namespace DonatelloAI.UI
 
         private void LoadModelFromGallery(ModelData modelData)
         {
-            Task.Run(async () =>
+            EvergineForegroundTask.Run(async () =>
             {
                 await this.modelCollectionManager.LoadModel(modelData);
             });
