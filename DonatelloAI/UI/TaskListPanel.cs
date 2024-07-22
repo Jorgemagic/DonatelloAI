@@ -21,9 +21,10 @@ namespace DonatelloAI.UI
             if (this.OpenWindow)
             {
                 int windowsWidth = 600;
-                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X - 8, io->DisplaySize.Y - 8), ImGuiCond.Appearing, Vector2.One);
-                ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, 105), ImGuiCond.Appearing);
-                ImguiNative.igBegin("Task list", this.OpenWindow.Pointer(), ImGuiWindowFlags.None);
+                ImguiNative.igSetNextWindowPos(new Vector2(io->DisplaySize.X - 8, io->DisplaySize.Y - 8), ImGuiCond.None, Vector2.One);
+                ImguiNative.igSetNextWindowSize(new Vector2(windowsWidth, 105), ImGuiCond.None);
+                ImguiNative.igSetNextWindowBgAlpha(0.35f);
+                ImguiNative.igBegin("Task list", this.OpenWindow.Pointer(), ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoNav);
 
                 var tasks = this.taskManager.TaskCollection;
 
