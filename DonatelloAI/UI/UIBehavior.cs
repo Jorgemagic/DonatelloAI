@@ -6,7 +6,6 @@ using Evergine.Bindings.Imguizmo;
 using Evergine.Common.Graphics;
 using Evergine.Framework;
 using Evergine.Mathematics;
-using Evergine.UI;
 using System;
 
 namespace DonatelloAI.UI
@@ -49,7 +48,7 @@ namespace DonatelloAI.UI
             this.galleryPanel = new GalleryPanel(modelCollectionManager);
             this.menuBar = new MenuBar(this);
             this.conversionPanel = new ConversionPanel(this.loadingPanel);
-            this.toolbar = new ToolbarPanel(this.manipulation, modelCollectionManager);
+            this.toolbar = new ToolbarPanel(imguiManager, this.manipulation, modelCollectionManager);
         }
 
         public bool ShowTextToModelPanel

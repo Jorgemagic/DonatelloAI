@@ -18,8 +18,7 @@ namespace DonatelloAI
             this.Managers.AddManager(new CustomImGuiManager()
             {
                 ImGuizmoEnabled = true,
-            });
-            
+            });            
         }
 
         protected override void CreateScene()
