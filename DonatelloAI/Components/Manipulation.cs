@@ -27,40 +27,19 @@ namespace DonatelloAI.Components
         private Matrix4x4 projection;
         private Matrix4x4 world;
 
-        private OPERATION operation;
-
         public bool PickingEnabled { get; set; } = true;
+
+        public OPERATION Operation { get; set; }
 
         public Manipulation()
         {
-            operation = OPERATION.TRANSLATE;
+            this.Operation = OPERATION.TRANSLATE;
         }
 
         protected override void Update(TimeSpan gameTime)
         {
             // Selected element
-            var camera = Managers.RenderManager?.ActiveCamera3D;
-
-            var keyboardDispacher = camera.Display?.KeyboardDispatcher;
-            if ( keyboardDispacher != null)
-            {
-                if (keyboardDispacher.ReadKeyState(Keys.D1) == ButtonState.Pressing)
-                {
-                    this.operation = OPERATION.TRANSLATE;
-                }
-                else if (keyboardDispacher.ReadKeyState(Keys.D2) == ButtonState.Pressing)
-                {
-                    this.operation = OPERATION.ROTATE;
-                }
-                else if (keyboardDispacher.ReadKeyState(Keys.D3) == ButtonState.Pressing)
-                {
-                    this.operation = OPERATION.SCALE;
-                }
-                else if (keyboardDispacher.ReadKeyState(Keys.D4) == ButtonState.Pressing)
-                {
-                    this.operation = OPERATION.UNIVERSAL;
-                }
-            }
+            var camera = Managers.RenderManager?.ActiveCamera3D;            
 
             var mouseDispatcher = camera.Display?.MouseDispatcher;
             if (mouseDispatcher != null)
@@ -112,7 +91,7 @@ namespace DonatelloAI.Components
                     projection = camera.Projection;
                     world = transform.WorldTransform;
 
-                    ImguizmoNative.ImGuizmo_Manipulate(view.Pointer(), projection.Pointer(), operation, MODE.LOCAL, world.Pointer(), null, null, null, null);
+                    ImguizmoNative.ImGuizmo_Manipulate(view.Pointer(), projection.Pointer(), this.Operation, MODE.LOCAL, world.Pointer(), null, null, null, null);
 
                     transform.WorldTransform = world;
                 }

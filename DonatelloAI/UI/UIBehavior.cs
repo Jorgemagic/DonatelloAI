@@ -1,4 +1,5 @@
-﻿using DonatelloAI.ImGui;
+﻿using DonatelloAI.Components;
+using DonatelloAI.ImGui;
 using DonatelloAI.SceneManagers;
 using Evergine.Bindings.Imgui;
 using Evergine.Bindings.Imguizmo;
@@ -21,6 +22,9 @@ namespace DonatelloAI.UI
         [BindSceneManager]
         private TaskManager taskManager = null;
 
+        [BindComponent(source: BindComponentSource.Scene)]
+        private Manipulation manipulation = null;
+
         private TextToModelPanel textToModelPanel;
         private ImageToModelPanel imageToModelPanel;
         private LoadingPanel loadingPanel;
@@ -30,6 +34,7 @@ namespace DonatelloAI.UI
         private GalleryPanel galleryPanel;
         private MenuBar menuBar;
         private ConversionPanel conversionPanel;
+        private ToolbarPanel toolbar;
 
         protected override void OnActivated()
         {
@@ -44,6 +49,7 @@ namespace DonatelloAI.UI
             this.galleryPanel = new GalleryPanel(modelCollectionManager);
             this.menuBar = new MenuBar(this);
             this.conversionPanel = new ConversionPanel(this.loadingPanel);
+            this.toolbar = new ToolbarPanel(this.manipulation, modelCollectionManager);
         }
 
         public bool ShowTextToModelPanel
@@ -103,6 +109,7 @@ namespace DonatelloAI.UI
             this.galleryPanel.Show(ref io);
             this.menuBar.Show(ref io);
             this.conversionPanel.Show(ref io);
+            this.toolbar.Show(ref io);
         }
 
         public void ShowConversionPanel(ModelData modelData)
