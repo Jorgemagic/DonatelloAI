@@ -90,7 +90,7 @@ namespace DonatelloAI.UI
             }
             else
             {
-                ImguiNative.igText("DonatelloAI 0.1.2 Generate 3D models using AI");
+                ImguiNative.igText("DonatelloAI 0.1.3 Generate 3D models using AI");
                 ImguiNative.igSeparator();
                 ImguiNative.igText("Created by Jorge Canton");
                 ImguiNative.igSpacing();
