@@ -4,9 +4,19 @@
 
 _DonatelloAI_ name not only pays homage to the famous Italian sculptor Donatello but also reflects its integration with artificial intelligence, symbolizing a fusion of traditional craftsmanship and modern technology
 
-I've developed a desktop tool leveraging __[TripoAI's service](https://platform.tripo3d.ai/docs/introduction)__ alongside __[Evergine](https://evergine.com/)__ to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials in _GLB_ format.
+I've developed a desktop tool leveraging __[TripoAI's service](https://platform.tripo3d.ai/docs/introduction)__ alongside __[Evergine](https://evergine.com/)__ to put the platform through its paces. This tool allows users to input prompts and instantly generate multiple 3D models complete with textures and materials.
 
-[![Video1](Screenshots/TripoAI-screenshot.png)](https://youtu.be/4h0niYYxv08)
+## Features
+
+- Text to 3D
+- Image or Sketch to 3D
+- AutoRig and animating generated models
+- Stylization
+- Optimized models and export to multiple formats GLTF, USDZ, FBX, OBJ, STL.
+- Model Gallery
+- Compose large scenes with generated models
+
+![DonatelloAI screenshot](Screenshots/donatelloAI.png)
 
 ## How to use
 
@@ -19,11 +29,18 @@ I've developed a desktop tool leveraging __[TripoAI's service](https://platform.
 
 ## More videos
 
+### Generate draft models within seconds
+[![Video1](Screenshots/TripoAI-screenshot.png)](https://youtu.be/4h0niYYxv08)
+
+### Refine textures
 [![Video2](Screenshots/refine_animate_screenshot.png)](https://youtu.be/tMIblPzj7Rk)
 
+### Generate models from image or sketch
 [![Video3](Screenshots/image-to-model.png)](https://www.youtube.com/watch?v=eK2TKLc32ZY)
 
+### Process models with multiples stylizations
 [![Video4](Screenshots/stylization.png)](https://youtu.be/CnJmdrukPUM)
 
+### Auto-rig generated models and animate them
 [![Video5](Screenshots/NBA-screenshot.png)](https://youtu.be/CmQe5D1VYhg)
 
